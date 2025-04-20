@@ -22,10 +22,10 @@
       left: 0;
       width: 100vw;
       height: 100vh;
+      z-index: -2;
       background-size: cover;
       background-position: center;
       filter: blur(25px);
-      z-index: -2;
     }
 
     .content {
@@ -88,8 +88,8 @@
   </style>
 </head>
 <body>
-  <!-- 배경 썸네일 -->
-  <div id="backgroundImage" class="background-image"></div>
+  <!-- 백그라운드 썸네일 -->
+  <div id="background" class="background-image"></div>
 
   <!-- 중앙 컨텐츠 -->
   <div class="content">
@@ -136,13 +136,16 @@
         const item = data.items[index % data.items.length];
         const videoId = item.snippet.resourceId.videoId;
         const title = item.snippet.title;
-        const thumbnail = item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high?.url;
 
-        // 썸네일 배경 설정
-        document.getElementById('backgroundImage').style.backgroundImage = `url('${thumbnail}')`;
+        // 썸네일 URL
+        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
-        // 미니플레이어 영상 설정
-        const miniPlayerUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&loop=1&playlist=${videoId}&mute=1&enablejsapi=1`;
+        // 배경에 썸네일 적용
+        document.getElementById('background').style.backgroundImage = `url('${thumbnailUrl}')`;
+
+        // 미니플레이어에 영상 재생
+        const origin = window.location.origin;
+        const miniPlayerUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&loop=1&playlist=${videoId}&mute=0&enablejsapi=1&origin=${origin}`;
         document.getElementById('miniVideo').src = miniPlayerUrl;
 
         document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
