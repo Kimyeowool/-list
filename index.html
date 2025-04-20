@@ -114,6 +114,7 @@
     <iframe id="miniVideo" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
   </div>
 
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script>
     const playlists = {
       indie: 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q',
@@ -123,6 +124,16 @@
 
     const likedSongs = [];
     let currentSong = null;
+    let miniPlayer = null;
+
+    function checkImageExists(url, fallback) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(url);
+        img.onerror = () => resolve(fallback);
+        img.src = url;
+      });
+    }
 
     async function playGenre(genre) {
       const playlistId = playlists[genre];
@@ -137,23 +148,36 @@
         const videoId = item.snippet.resourceId.videoId;
         const title = item.snippet.title;
 
-        // 썸네일 URL
-        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-
-        // 배경에 썸네일 적용
-        document.getElementById('background').style.backgroundImage = `url('${thumbnailUrl}')`;
-
-        // 미니플레이어에 영상 재생
-        const origin = window.location.origin;
-        const miniPlayerUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&loop=1&playlist=${videoId}&mute=0&enablejsapi=1&origin=${origin}`;
-        document.getElementById('miniVideo').src = miniPlayerUrl;
+        const maxres = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        const fallback = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        const finalThumb = await checkImageExists(maxres, fallback);
+        document.getElementById('background').style.backgroundImage = `url('${finalThumb}')`;
 
         document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
         currentSong = { title, videoId };
+
+        loadMiniPlayer(videoId);
       } catch (e) {
         alert("곡을 불러오는 중 오류가 발생했습니다.");
         console.error(e);
       }
+    }
+
+    function loadMiniPlayer(videoId) {
+      const origin = window.location.origin;
+      const playerUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&loop=1&playlist=${videoId}&mute=1&enablejsapi=1&origin=${origin}`;
+      document.getElementById('miniVideo').src = playerUrl;
+
+      // 유튜브 API 로딩 후 호출되는 함수에서 언뮤트
+      window.onYouTubeIframeAPIReady = function () {
+        miniPlayer = new YT.Player('miniVideo', {
+          events: {
+            onReady: function (event) {
+              setTimeout(() => event.target.unMute(), 500); // 사용자 상호작용 이후 unmute
+            }
+          }
+        });
+      };
     }
 
     function likeSong() {
