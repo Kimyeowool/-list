@@ -103,18 +103,17 @@
   </div>
 
   <!-- YouTube API -->
-  <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
-    const playlistId = 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d';
-
     let currentSong = {};
     let backgroundPlayer = null;
     let ytReady = false;
 
-    function onYouTubeIframeAPIReady() {
+    const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
+    const playlistId = 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d';
+
+    window.onYouTubeIframeAPIReady = function () {
       ytReady = true;
-    }
+    };
 
     function createBackgroundPlayer(videoId) {
       if (backgroundPlayer) {
@@ -144,6 +143,11 @@
     }
 
     async function fetchRandomSong() {
+      if (!ytReady) {
+        alert("유튜브 API가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+
       const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
       try {
         const res = await fetch(url);
@@ -161,8 +165,8 @@
         currentSong = { videoId, title };
         document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
         document.getElementById("mini-player").src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
-        
-        if (ytReady) createBackgroundPlayer(videoId);
+
+        createBackgroundPlayer(videoId);
         updateLikeButton();
       } catch (e) {
         console.error(e);
@@ -215,5 +219,6 @@
         .catch(() => alert("복사 실패"));
     });
   </script>
+  <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
