@@ -2,8 +2,18 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>오늘의 추천곡</title>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      color: white;
+      text-align: center;
+    }
+
     #video-bg iframe {
       position: fixed;
       top: 0;
@@ -14,18 +24,53 @@
       filter: blur(8px) brightness(0.5);
       z-index: -1;
     }
+
     .content {
       position: relative;
       z-index: 1;
-      color: white;
-      text-align: center;
       padding-top: 20%;
     }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+
     #watchLink {
       display: inline-block;
-      margin-top: 10px;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #f44336;
       color: white;
       text-decoration: none;
+      border-radius: 5px;
+    }
+
+    #watchLink:hover {
+      background-color: #d32f2f;
+    }
+
+    .buttons {
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #00796b;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #004d40;
+    }
+
+    @media screen and (max-width: 600px) {
+      h1 {
+        font-size: 1.5em;
+      }
     }
   </style>
 </head>
@@ -34,8 +79,12 @@
   <div class="content">
     <h1 id="song-title">오늘의 추천곡</h1>
     <a id="watchLink" href="#" target="_blank">유튜브에서 보기</a>
+    <div class="buttons">
+      <button id="likeButton">👍 좋아요</button>
+      <button id="shareButton">📤 공유하기</button>
+    </div>
   </div>
-  
+
   <script src="app.js"></script>
 </body>
 </html>
