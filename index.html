@@ -2,149 +2,44 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>오늘의 추천곡</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오늘의 추천곡</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      height: 100%;
+    body {
       font-family: 'Pretendard', sans-serif;
-      background: #6a1b9a; /* 보라색 배경 */
-      overflow: hidden;
+      background-color: #6a1b9a;
       color: white;
-    }
-
-    .video-background {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
+      text-align: center;
+      margin: 0;
+      padding: 0;
       height: 100vh;
-      overflow: hidden;
-      z-index: -1; /* 배경 영상이 콘텐츠 뒤로 가도록 설정 */
-    }
-
-    .video-background iframe {
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-    }
-
-    .content {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      text-align: center;
-      z-index: 2; /* 콘텐츠가 배경보다 위에 보이도록 설정 */
-      position: relative;
     }
 
-    .text-container {
-      font-size: 2em;
-      font-weight: bold;
-      white-space: nowrap;
-      overflow: hidden;
-      border-right: 3px solid white;
-      width: 0;
-      animation: typing 4s steps(30, end) forwards, blink 0.75s step-end infinite;
-      margin-bottom: 30px;
+    #song-title {
+      font-size: 2rem;
+      margin-bottom: 20px;
     }
 
-    @keyframes typing {
-      from { width: 0 }
-      to { width: 100% }
-    }
-
-    @keyframes blink {
-      50% { border-color: transparent }
-    }
-
-    .buttons {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .buttons button, .buttons a, .buttons input[type="date"] {
-      padding: 10px 20px;
-      font-size: 14px;
+    iframe {
+      width: 80vw;
+      height: 45vh;
       border: none;
-      border-radius: 30px;
-      cursor: pointer;
-      background-color: white;
-      color: black;
-      transition: 0.3s;
-      text-decoration: none;
+      margin-bottom: 20px;
     }
-
-    .buttons button:hover, .buttons a:hover {
-      background-color: #ff4081;
-      color: white;
-    }
-
-    .liked {
-      background-color: #ff4081 !important;
-      color: white !important;
-    }
-
-    @media (max-width: 768px) {
-      .text-container { font-size: 1.5em; }
-    }
-
-    .controls {
-      position: absolute;
-      bottom: 20px;
-      display: flex;
-      gap: 15px;
-      z-index: 3;
-      justify-content: center;
-      width: 100%;
-    }
-
-    .controls button {
-      background-color: #ff4081;
-      color: white;
-      border-radius: 25px;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .controls button:hover {
-      background-color: #ff80ab;
-    }
-
   </style>
 </head>
 <body>
 
-  <!-- 배경 영상 -->
-  <div class="video-background" id="video-bg"></div>
-
-  <!-- 콘텐츠 -->
-  <div class="content">
-    <div class="text-container" id="song-title">오늘의 추천곡</div>
-
-    <div class="buttons">
-      <input type="date" id="datePicker">
-      <button id="likeBtn">❤️ 좋아요</button>
-      <button id="shareBtn">📤 공유</button>
-      <a href="#" id="watchLink" target="_blank">🔗 유튜브에서 보기</a>
-      <button id="viewLikesBtn">💖 좋아요 목록</button>
-    </div>
-  </div>
-
-  <!-- 최소한의 제어 버튼 -->
-  <div class="controls">
-    <button id="playPauseBtn">▶ 재생</button>
-    <button id="skipAdBtn">⏭ 광고 건너뛰기</button>
-  </div>
+  <div id="song-title">오늘의 추천곡</div>
+  <iframe id="video-frame" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
   <script>
-    const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE'; // Your API key
-    const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q'; // Your playlist ID
+    const apiKey = 'YOUR_API_KEY'; // YouTube Data API 키 입력
+    const playlistId = 'YOUR_PLAYLIST_ID'; // 추천할 재생목록 ID 입력
 
     // 랜덤으로 노래를 추천하는 함수
     async function getRandomSongFromPlaylist() {
@@ -163,104 +58,19 @@
 
           // 텍스트와 영상 업데이트
           document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
-          document.getElementById("video-bg").innerHTML = `
-            <iframe
-              id="videoPlayer"
-              src="https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${videoId}&modestbranding=1"
-              frameborder="0"
-              allow="autoplay; encrypted-media"
-              allowfullscreen
-            ></iframe>
-          `;
-
-          document.getElementById("watchLink").href = `https://www.youtube.com/watch?v=${videoId}`;
+          document.getElementById("video-frame").src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${videoId}&modestbranding=1`;
+        } else {
+          console.error('재생목록에서 노래를 찾을 수 없습니다.');
         }
       } catch (error) {
-        console.error('Error fetching song from playlist:', error);
+        console.error('API 요청 실패:', error);
       }
     }
 
     // 페이지 로드 시 랜덤 노래 추천
-    window.onload = () => {
-      getRandomSongFromPlaylist();
-    };
+    window.onload = getRandomSongFromPlaylist;
 
-    // 날짜 변경 시 랜덤 노래 추천
-    document.getElementById("datePicker").addEventListener("change", () => {
-      getRandomSongFromPlaylist();
-    });
-
-    // 좋아요 기능
-    document.getElementById("likeBtn").addEventListener("click", () => {
-      const dateStr = document.getElementById("datePicker").value;
-      let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
-      const existing = likedSongs.find(s => s.date === dateStr);
-
-      if (!existing) {
-        likedSongs.push({ date: dateStr, title: document.getElementById("song-title").textContent });
-        localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
-        alert("좋아요에 추가되었습니다 💖");
-      } else {
-        likedSongs = likedSongs.filter(s => s.date !== dateStr);
-        localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
-        alert("좋아요에서 제거되었습니다 💔");
-      }
-
-      getRandomSongFromPlaylist(); // 상태 갱신
-    });
-
-    // 공유 기능
-    document.getElementById("shareBtn").addEventListener("click", async () => {
-      const dateStr = document.getElementById("datePicker").value;
-      const shareData = {
-        title: "오늘의 추천곡",
-        text: `추천곡 (${dateStr}): ${document.getElementById("song-title").textContent}`,
-        url: document.getElementById("watchLink").href
-      };
-      try {
-        if (navigator.share) await navigator.share(shareData);
-        else alert("이 브라우저는 공유를 지원하지 않아요 😢");
-      } catch (err) {
-        console.error("공유 실패:", err);
-      }
-    });
-
-    // 좋아요 목록 보기
-    document.getElementById("viewLikesBtn").addEventListener("click", () => {
-      const likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
-      if (likedSongs.length === 0) {
-        alert("좋아요한 곡이 아직 없어요 💔");
-        return;
-      }
-
-      let list = likedSongs.map(s => `${s.date} - ${s.title}`).join("\n");
-      alert("💖 내가 좋아요한 곡 목록:\n\n" + list);
-    });
-
-    // 재생/일시정지 버튼 동작
-    document.getElementById("playPauseBtn").addEventListener("click", () => {
-      const iframe = document.getElementById("videoPlayer");
-      const player = new YT.Player(iframe);
-
-      if (player.getPlayerState() === YT.PlayerState.PLAYING) {
-        player.pauseVideo();
-        document.getElementById("playPauseBtn").textContent = "▶ 재생";
-      } else {
-        player.playVideo();
-        document.getElementById("playPauseBtn").textContent = "❚❚ 일시정지";
-      }
-    });
-
-    // 광고 건너뛰기 버튼
-    document.getElementById("skipAdBtn").addEventListener("click", () => {
-      const iframe = document.getElementById("videoPlayer");
-      const player = new YT.Player(iframe);
-      player.seekTo(player.getDuration()); // 영상 끝으로 이동하여 광고 건너뛰기
-    });
   </script>
-
-  <!-- YouTube API 로드 -->
-  <script src="https://www.youtube.com/iframe_api"></script>
 
 </body>
 </html>
