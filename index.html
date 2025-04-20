@@ -92,6 +92,24 @@
     @media (max-width: 768px) {
       .text-container { font-size: 1.5em; }
     }
+
+    /* 변경된 부분: high-contrast -> forced-colors */
+    @media (forced-colors: active) {
+      html, body {
+        background-color: black;
+        color: white;
+      }
+
+      .buttons button, .buttons a, .buttons input[type="date"] {
+        background-color: white;
+        color: black;
+      }
+
+      .buttons button:hover, .buttons a:hover {
+        background-color: #ff4081;
+        color: white;
+      }
+    }
   </style>
 </head>
 <body>
