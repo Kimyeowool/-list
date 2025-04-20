@@ -46,12 +46,6 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
 
-    .mini-player iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-
     .content {
       text-align: center;
       z-index: 3;
@@ -83,10 +77,10 @@
 </head>
 <body>
 
-  <!-- 배경 영상 -->
+  <!-- 배경 유튜브 플레이어 -->
   <div id="background-player"></div>
 
-  <!-- 미니 플레이어 -->
+  <!-- 미니 유튜브 플레이어 -->
   <div class="mini-player">
     <iframe id="mini-player" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
   </div>
@@ -110,20 +104,18 @@
     const playlistId = 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d';
 
     let currentSong = {};
-    let backgroundPlayer;
+    let backgroundPlayer = null;
     let ytReady = false;
 
     function onYouTubeIframeAPIReady() {
       ytReady = true;
     }
 
-    function createBackgroundPlayer(videoId) {
+    function createOrUpdateBackground(videoId) {
       if (backgroundPlayer) {
         backgroundPlayer.loadVideoById(videoId);
       } else {
         backgroundPlayer = new YT.Player('background-player', {
-          width: '100%',
-          height: '100%',
           videoId: videoId,
           playerVars: {
             autoplay: 1,
@@ -139,12 +131,6 @@
             onReady: e => {
               e.target.mute();
               e.target.playVideo();
-            },
-            onStateChange: e => {
-              if (e.data === YT.PlayerState.UNSTARTED) {
-                // 재생 강제 시작 (Edge 호환용)
-                e.target.playVideo();
-              }
             }
           }
         });
@@ -169,9 +155,23 @@
         currentSong = { videoId, title };
         document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
 
-        document.getElementById("mini-player").src = `https://www.youtube.com/embed/${videoId}?controls=1&rel=0`;
+        // 미니플레이어에 삽입
+        const miniUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&controls=1`;
+        document.getElementById("mini-player").src = miniUrl;
 
-        if (ytReady) createBackgroundPlayer(videoId);
+        // 배경 플레이어 생성/갱신
+        if (ytReady) {
+          createOrUpdateBackground(videoId);
+        } else {
+          // API 준비되기 전에 호출될 경우 대비
+          const interval = setInterval(() => {
+            if (ytReady) {
+              createOrUpdateBackground(videoId);
+              clearInterval(interval);
+            }
+          }, 500);
+        }
+
         updateLikeButton();
       } catch (e) {
         console.error(e);
@@ -224,9 +224,10 @@
         .catch(() => alert("복사 실패"));
     });
 
-    window.addEventListener('load', () => {
-      fetchRandomSong();
-    });
+    // 첫 로딩 시 자동 추천
+    window.onload = () => {
+      setTimeout(fetchRandomSong, 1000);
+    };
   </script>
 </body>
 </html>
