@@ -141,7 +141,6 @@
     let bgPlayer = null;
 
     function onYouTubeIframeAPIReady() {
-      // 자동으로 인디 장르 재생
       playGenre('indie');
     }
 
@@ -172,8 +171,6 @@
       if (miniPlayer) miniPlayer.destroy();
       if (bgPlayer) bgPlayer.destroy();
 
-      const origin = window.location.origin;
-
       // 배경 플레이어
       bgPlayer = new YT.Player('bgVideo', {
         videoId: videoId,
@@ -186,7 +183,6 @@
           showinfo: 0,
           modestbranding: 1,
           rel: 0,
-          origin: origin,
           playsinline: 1
         },
         events: {
@@ -205,7 +201,6 @@
           controls: 1,
           modestbranding: 1,
           rel: 0,
-          origin: origin,
           playsinline: 1
         },
         events: {
