@@ -25,6 +25,7 @@
       z-index: -2;
       object-fit: cover;
       filter: blur(25px);
+      pointer-events: none;
     }
 
     .content {
@@ -88,7 +89,7 @@
 </head>
 <body>
   <!-- 백그라운드 영상 -->
-  <iframe id="background" class="background-video" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <iframe id="background" class="background-video" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen muted></iframe>
 
   <!-- 중앙 컨텐츠 -->
   <div class="content">
@@ -136,11 +137,12 @@
         const videoId = item.snippet.resourceId.videoId;
         const title = item.snippet.title;
 
-        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&loop=1&playlist=${videoId}&mute=1`;
+        const backgroundUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&loop=1&playlist=${videoId}&mute=1`;
+        const miniPlayerUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&loop=1&playlist=${videoId}&mute=0`;
 
         document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
-        document.getElementById('background').src = embedUrl;
-        document.getElementById('miniVideo').src = embedUrl;
+        document.getElementById('background').src = backgroundUrl;
+        document.getElementById('miniVideo').src = miniPlayerUrl;
 
         currentSong = { title, videoId };
       } catch (e) {
