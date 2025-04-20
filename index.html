@@ -14,8 +14,7 @@
 
     #background-player {
       position: fixed;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
       width: 100vw;
       height: 100vh;
       z-index: -1;
@@ -67,7 +66,6 @@
 
   <script>
     let miniPlayer, backgroundPlayer;
-
     const playlists = {
       indie: ['dQw4w9WgXcQ', 'kXYiU_JCYtU'],
       pop: ['3JZ4pnNtyxQ', 'RgKAFK5djSk'],
@@ -97,23 +95,16 @@
 
       backgroundPlayer = new YT.Player('background-player', {
         videoId: defaultId,
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-          mute: 1,
-          loop: 1,
-          playlist: defaultId
-        },
+        playerVars: { autoplay: 1, controls: 0, mute: 1, loop: 1, playlist: defaultId },
         events: {
           onReady: e => e.target.mute()
         }
       });
 
-      // 백그라운드 동기화
       setInterval(() => {
-        const t1 = miniPlayer.getCurrentTime?.();
-        const t2 = backgroundPlayer.getCurrentTime?.();
-        if (t1 !== undefined && t2 !== undefined && Math.abs(t1 - t2) > 1) {
+        const t1 = miniPlayer?.getCurrentTime?.();
+        const t2 = backgroundPlayer?.getCurrentTime?.();
+        if (t1 && t2 && Math.abs(t1 - t2) > 1) {
           backgroundPlayer.seekTo(t1, true);
         }
       }, 1000);
