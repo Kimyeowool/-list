@@ -84,7 +84,7 @@
 </head>
 <body>
 
-  <!-- 배경 영상 (YouTube API로 제어됨) -->
+  <!-- 배경 영상 (YouTube API로 생성됨) -->
   <div id="background-video"></div>
 
   <!-- 미니 플레이어 -->
@@ -103,7 +103,7 @@
     </div>
   </div>
 
-  <!-- YouTube API 로딩 -->
+  <!-- YouTube API -->
   <script src="https://www.youtube.com/iframe_api"></script>
 
   <script>
@@ -111,28 +111,27 @@
     const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q';
 
     let currentSong = {};
-    let backgroundPlayer; // 배경 플레이어 제어용
+    let backgroundPlayer;
 
-    // YouTube Iframe API 준비되면 실행되는 콜백
     function onYouTubeIframeAPIReady() {
+      // 최초엔 빈 플레이어 생성, 이후 곡 추천 시 loadVideoById로 바꿔줌
       backgroundPlayer = new YT.Player('background-video', {
         height: '100%',
         width: '100%',
-        videoId: '', // 추천곡에서 채워짐
+        videoId: '',
         playerVars: {
           autoplay: 1,
           controls: 0,
           mute: 1,
           loop: 1,
-          playlist: '', // 추천곡에서 채워짐
+          playlist: '', // 최초는 비워두고 나중에 set
           modestbranding: 1,
           rel: 0,
           playsinline: 1
         },
         events: {
-          onReady: (event) => {
+          onReady: event => {
             event.target.mute();
-            event.target.playVideo();
           }
         }
       });
@@ -153,16 +152,23 @@
 
           currentSong = { videoId, title };
 
-          // 메인 미니 플레이어
+          // 메인 미니플레이어
           const mainUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
           document.getElementById("main-video").src = mainUrl;
 
-          // 배경 영상 재생
+          // 배경 영상 제어
           if (backgroundPlayer && backgroundPlayer.loadVideoById) {
             backgroundPlayer.loadVideoById({
               videoId: videoId,
               suggestedQuality: 'large'
             });
+
+            // loop 보장을 위해 playlist 재설정
+            backgroundPlayer.cueVideoById({
+              videoId: videoId,
+              suggestedQuality: 'large'
+            });
+
             backgroundPlayer.setLoop(true);
           }
 
@@ -220,13 +226,10 @@
       let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
       const likeBtn = document.getElementById("like-btn");
       const exists = likedSongs.some(song => song.videoId === currentSong.videoId);
-
       likeBtn.classList.toggle("liked", exists);
     }
 
-    // 페이지 로드시 추천곡 자동 요청
     window.onload = () => {
-      // Iframe API 로드 직후 실행되므로, 약간 딜레이를 주는 게 안전
       setTimeout(getRandomSongFromPlaylist, 1000);
     };
   </script>
