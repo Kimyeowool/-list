@@ -2,92 +2,95 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Today's Song</title>
+  <title>Today's Song Recommendation</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body, html {
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: 'Arial', sans-serif;
       background-color: #000;
       color: white;
+      font-family: 'Arial', sans-serif;
       overflow: hidden;
     }
 
     .background-video {
       position: fixed;
-      top: 0; left: 0;
+      top: 0;
+      left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: cover;
-      z-index: -2;
-      filter: blur(12px) brightness(0.3);
+      z-index: -1;
       pointer-events: none;
+      filter: blur(20px) brightness(0.4);
     }
 
     .content {
       position: relative;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
+      z-index: 1;
       text-align: center;
+      top: 30%;
     }
 
     h1 {
       font-size: 2.5rem;
-      margin-bottom: 0.5rem;
+      font-weight: bold;
     }
 
-    p {
-      margin: 0.5rem 0;
-    }
-
-    .genre-buttons, .action-buttons {
-      margin-top: 1rem;
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      justify-content: center;
+    .buttons {
+      margin-top: 20px;
     }
 
     button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
+      margin: 5px;
+      padding: 10px 15px;
+      border-radius: 10px;
       border: none;
-      border-radius: 12px;
+      font-size: 1rem;
       cursor: pointer;
       background: white;
       color: black;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background: #ddd;
-    }
-
-    #miniPlayer iframe {
-      width: 160px;
-      height: 90px;
-      border-radius: 8px;
     }
 
     #miniPlayer {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      z-index: 10;
+      width: 200px;
+      height: 112px;
+      z-index: 2;
+      border-radius: 12px;
+      overflow: hidden;
     }
+
+    .liked-songs {
+      display: none;
+      position: absolute;
+      background: white;
+      color: black;
+      padding: 10px;
+      border-radius: 10px;
+      width: 250px;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+    }
+
+    .liked-songs ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .liked-songs li {
+      padding: 5px 0;
+      border-bottom: 1px solid #ccc;
+    }
+
   </style>
 </head>
 <body>
-
   <!-- 배경 영상 -->
   <iframe
     id="background"
@@ -95,89 +98,93 @@
     frameborder="0"
     allow="autoplay; encrypted-media"
     allowfullscreen
-  ></iframe>
+    src="https://www.youtube.com/embed/ZcQ88BYcS1E?autoplay=1&mute=1&controls=0&loop=1&playlist=ZcQ88BYcS1E">
+  </iframe>
 
-  <!-- 중앙 콘텐츠 -->
   <div class="content">
-    <h1>Today's<br/>recommended song</h1>
-    <p id="songTitle">오늘의 추천곡: </p>
-
-    <div class="genre-buttons">
-      <button onclick="playRandomSong('indie')">🎧 인디</button>
-      <button onclick="playRandomSong('pop')">✏️ 팝송</button>
-      <button onclick="playRandomSong('japan')">🗾 일본</button>
+    <h1>Today's<br />recommended song</h1>
+    <p>오늘의 추천곡: <span id="song-title">sokodomo - 회전목마 (Feat. Zion.T, 원슈타인) (Prod. Slom) | 쇼미더머니 10 Episode 2</span></p>
+    <div class="buttons">
+      <button onclick="playGenre('indie')">🎧 인디</button>
+      <button onclick="playGenre('pop')">✏️ 팝송</button>
+      <button onclick="playGenre('japan')">🗾 일본</button><br />
+      <button onclick="likeSong()">❤️ 좋아요</button>
+      <button onclick="toggleLikedSongs()">🧡 좋아요 목록</button>
+      <button onclick="shareSong()">🔗 공유하기</button>
     </div>
-
-    <div class="action-buttons">
-      <button>❤️ 좋아요</button>
-      <button>🧡 좋아요 목록</button>
-      <button>🔗 공유하기</button>
+    <div class="liked-songs" id="likedSongs">
+      <ul id="likedList"></ul>
     </div>
   </div>
 
-  <!-- 미니플레이어 -->
-  <div id="miniPlayer"></div>
+  <!-- 미니 유튜브 플레이어 -->
+  <div id="miniPlayer">
+    <iframe
+      id="miniFrame"
+      width="100%"
+      height="100%"
+      frameborder="0"
+      allow="autoplay; encrypted-media"
+      allowfullscreen
+      src="https://www.youtube.com/embed/ZcQ88BYcS1E?autoplay=1">
+    </iframe>
+  </div>
 
   <script>
-    const playlists = {
-      indie: [
-        { id: "dQw4w9WgXcQ", title: "Indie Song 1" },
-        { id: "Zi_XLOBDo_Y", title: "Indie Song 2" }
-      ],
-      pop: [
-        { id: "3JZ4pnNtyxQ", title: "Pop Song 1" },
-        { id: "UceaB4D0jpo", title: "Pop Song 2" }
-      ],
-      japan: [
-        { id: "kXYiU_JCYtU", title: "Japanese Song 1" },
-        { id: "JGwWNGJdvx8", title: "Japanese Song 2" }
-      ]
+    const genrePlaylists = {
+      indie: ['https://www.youtube.com/embed/dJYGatp4SzY', 'https://www.youtube.com/embed/CQ1Jt0bE1Jg'],
+      pop: ['https://www.youtube.com/embed/HgzGwKwLmgM', 'https://www.youtube.com/embed/tgbNymZ7vqY'],
+      japan: ['https://www.youtube.com/embed/q6EoRBvdVPQ', 'https://www.youtube.com/embed/GRxofEmo3HA']
     };
 
-    let currentVideoId = null;
-    let miniPlayer;
-    let syncInterval;
+    let likedSongs = [];
 
-    function playRandomSong(genre) {
-      const list = playlists[genre];
-      const random = list[Math.floor(Math.random() * list.length)];
-      currentVideoId = random.id;
-
-      // 미니 플레이어 설정
-      document.getElementById("miniPlayer").innerHTML = `
-        <iframe id="miniFrame"
-          src="https://www.youtube.com/embed/${currentVideoId}?autoplay=1&controls=1"
-          frameborder="0"
-          allow="autoplay; encrypted-media"
-          allowfullscreen>
-        </iframe>
-      `;
-
-      // 배경 영상 설정
-      document.getElementById("background").src =
-        `https://www.youtube.com/embed/${currentVideoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${currentVideoId}`;
-
-      // 제목 업데이트
-      document.getElementById("songTitle").innerText = "오늘의 추천곡: " + random.title;
-
-      // 동기화 시작
-      setTimeout(() => syncPlayers(), 1000);
+    function playGenre(genre) {
+      const songs = genrePlaylists[genre];
+      const randomUrl = songs[Math.floor(Math.random() * songs.length)];
+      document.getElementById('miniFrame').src = `${randomUrl}?autoplay=1`;
+      document.getElementById('background').src = `${randomUrl}?autoplay=1&mute=1&controls=0&loop=1&playlist=${getVideoId(randomUrl)}`;
+      document.getElementById('song-title').innerText = `Genre: ${genre}`;
     }
 
-    function syncPlayers() {
-      const mini = document.getElementById("miniFrame")?.contentWindow;
-      const background = document.getElementById("background")?.contentWindow;
+    function likeSong() {
+      const title = document.getElementById('song-title').innerText;
+      if (!likedSongs.includes(title)) {
+        likedSongs.push(title);
+        updateLikedList();
+        alert(`'${title}'을(를) 좋아요에 추가했어요!`);
+      } else {
+        alert('이미 좋아요에 추가된 곡이에요!');
+      }
+    }
 
-      if (!mini || !background) return;
+    function updateLikedList() {
+      const list = document.getElementById('likedList');
+      list.innerHTML = '';
+      likedSongs.forEach(song => {
+        const li = document.createElement('li');
+        li.textContent = song;
+        list.appendChild(li);
+      });
+    }
 
-      // YouTube IFrame API를 써야 완벽한 동기화가 가능하지만, 이건 간단한 방식
-      clearInterval(syncInterval);
-      syncInterval = setInterval(() => {
-        try {
-          mini.postMessage('{"event":"listening","id":1}', "*");
-          background.postMessage('{"event":"listening","id":1}', "*");
-        } catch (e) {}
-      }, 3000);
+    function toggleLikedSongs() {
+      const box = document.getElementById('likedSongs');
+      box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function shareSong() {
+      const title = document.getElementById('song-title').innerText;
+      const url = document.getElementById('miniFrame').src;
+      const shareText = `${title}\n${url}`;
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert('곡 정보가 클립보드에 복사되었어요!');
+      });
+    }
+
+    function getVideoId(url) {
+      const match = url.match(/embed\/([^?&]+)/);
+      return match ? match[1] : '';
     }
   </script>
 </body>
