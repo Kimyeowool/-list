@@ -43,6 +43,11 @@
       background-color: #ff4081;
       color: white;
     }
+
+    .liked {
+      background-color: #ff4081 !important;
+      color: white !important;
+    }
   </style>
 </head>
 <body>
@@ -52,11 +57,14 @@
     <div id="song-title">로딩 중...</div>
     <iframe id="video-frame" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     <button id="recommend-btn">추천곡 받기</button>
+    <button id="like-btn">❤️ 좋아요</button>
   </div>
 
   <script>
     const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE'; // 여기에 YouTube Data API 키를 입력하세요
     const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q'; // 여기에 재생목록 ID를 입력하세요
+
+    let currentSong = {}; // 현재 추천된 노래
 
     // 랜덤으로 노래를 추천하는 함수
     async function getRandomSongFromPlaylist() {
@@ -73,9 +81,14 @@
           const videoId = randomSong.snippet.resourceId.videoId;
           const title = randomSong.snippet.title;
 
+          currentSong = { videoId, title };
+
           // 텍스트와 영상 업데이트
           document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
           document.getElementById("video-frame").src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
+
+          // 좋아요 상태 업데이트
+          updateLikeButton();
         } else {
           alert("재생목록에 곡이 없습니다.");
         }
@@ -85,7 +98,39 @@
       }
     }
 
-    // 버튼 클릭 시 랜덤 노래 추천
+    // 좋아요 버튼 클릭 시
+    document.getElementById("like-btn").addEventListener("click", () => {
+      let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
+      const songExists = likedSongs.some(song => song.videoId === currentSong.videoId);
+
+      if (songExists) {
+        // 이미 좋아요한 곡이라면 좋아요 취소
+        likedSongs = likedSongs.filter(song => song.videoId !== currentSong.videoId);
+        alert("좋아요가 취소되었습니다.");
+      } else {
+        // 좋아요 추가
+        likedSongs.push(currentSong);
+        alert("좋아요가 추가되었습니다.");
+      }
+
+      localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
+      updateLikeButton(); // 좋아요 버튼 상태 업데이트
+    });
+
+    // 좋아요 버튼 상태 업데이트
+    function updateLikeButton() {
+      let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
+      const songExists = likedSongs.some(song => song.videoId === currentSong.videoId);
+      const likeBtn = document.getElementById("like-btn");
+
+      if (songExists) {
+        likeBtn.classList.add("liked");
+      } else {
+        likeBtn.classList.remove("liked");
+      }
+    }
+
+    // 추천곡 받기 버튼 클릭 시
     document.getElementById("recommend-btn").addEventListener("click", getRandomSongFromPlaylist);
 
     // 페이지 로드 시 첫 번째 노래 추천
