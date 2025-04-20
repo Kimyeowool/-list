@@ -88,64 +88,96 @@
 </head>
 <body>
   <!-- 백그라운드 영상 -->
-  <iframe
-    id="background"
-    class="background-video"
-    src="https://www.youtube.com/embed/ZcQ88BYcS1E?autoplay=1&mute=1&controls=0&loop=1&playlist=ZcQ88BYcS1E"
-    frameborder="0"
-    allow="autoplay; encrypted-media"
-    allowfullscreen
-  ></iframe>
+  <iframe id="background" class="background-video" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen muted></iframe>
 
   <!-- 중앙 컨텐츠 -->
   <div class="content">
     <h1>Today's recommended song</h1>
-    <div id="songTitle">ZcQ88BYcS1E</div>
+    <div id="songTitle">장르를 선택해 주세요</div>
 
     <div class="button-group">
-      <button class="btn" onclick="like()">❤️ 좋아요</button>
+      <button class="btn" onclick="playGenre('indie')">🎧 인디</button>
+      <button class="btn" onclick="playGenre('pop')">✏️ 팝송</button>
+      <button class="btn" onclick="playGenre('japan')">🎌 일본</button>
+    </div>
+
+    <div class="button-group">
+      <button class="btn" onclick="likeSong()">❤️ 좋아요</button>
       <button class="btn" onclick="showLikes()">🧡 좋아요 목록</button>
-      <button class="btn" onclick="share()">🔗 공유하기</button>
+      <button class="btn" onclick="shareSong()">🔗 공유하기</button>
     </div>
   </div>
 
   <!-- 미니 유튜브 플레이어 -->
   <div id="miniPlayer">
-    <iframe
-      id="miniFrame"
-      src="https://www.youtube.com/embed/ZcQ88BYcS1E?autoplay=1"
-      frameborder="0"
-      allow="autoplay; encrypted-media"
-      allowfullscreen
-    ></iframe>
+    <iframe id="miniVideo" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
   </div>
 
   <script>
-    const likedVideos = [];
+    const playlists = {
+      indie: 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q',
+      pop: 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d',
+      japan: 'PLu4x1UBAg4x8lyQztvvlOEBFAxC_F3TBU'
+    };
 
-    function like() {
-      const videoId = "ZcQ88BYcS1E";
-      if (!likedVideos.includes(videoId)) {
-        likedVideos.push(videoId);
-        alert("좋아요를 눌렀습니다!");
+    const likedSongs = [];
+
+    async function playGenre(genre) {
+      const playlistId = playlists[genre];
+      const index = Math.floor(Math.random() * 50);
+      const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
+      const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
+
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        const item = data.items[index % data.items.length];
+        const videoId = item.snippet.resourceId.videoId;
+        const title = item.snippet.title;
+
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&loop=1&playlist=${videoId}`;
+
+        document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
+        document.getElementById('background').src = embedUrl + '&mute=1';
+        document.getElementById('miniVideo').src = embedUrl;
+
+        currentSong = { title, videoId };
+      } catch (e) {
+        alert("곡을 불러오는 중 오류가 발생했습니다.");
+        console.error(e);
+      }
+    }
+
+    let currentSong = null;
+
+    function likeSong() {
+      if (currentSong && !likedSongs.find(s => s.videoId === currentSong.videoId)) {
+        likedSongs.push(currentSong);
+        alert(`'${currentSong.title}'을(를) 좋아요에 추가했습니다.`);
       } else {
-        alert("이미 좋아요를 누른 영상입니다.");
+        alert('이미 좋아요를 누르셨거나 노래가 없습니다.');
       }
     }
 
     function showLikes() {
-      if (likedVideos.length === 0) {
-        alert("좋아요한 영상이 없습니다.");
+      if (likedSongs.length === 0) {
+        alert('아직 좋아요한 곡이 없습니다.');
       } else {
-        alert("좋아요 목록:\n" + likedVideos.join("\n"));
+        const list = likedSongs.map(song => `🎵 ${song.title}`).join('\n');
+        alert('❤️ 좋아요 목록:\n\n' + list);
       }
     }
 
-    function share() {
-      const url = `https://www.youtube.com/watch?v=ZcQ88BYcS1E`;
-      navigator.clipboard.writeText(url).then(() => {
-        alert("영상 링크가 복사되었습니다!");
-      });
+    function shareSong() {
+      if (!currentSong) {
+        alert('먼저 노래를 재생해주세요.');
+        return;
+      }
+
+      const shareUrl = `https://www.youtube.com/watch?v=${currentSong.videoId}`;
+      navigator.clipboard.writeText(shareUrl)
+        .then(() => alert('공유 링크가 클립보드에 복사되었습니다!'))
+        .catch(err => alert('링크 복사에 실패했습니다.'));
     }
   </script>
 </body>
