@@ -123,19 +123,23 @@
       try {
         const response = await fetch(url);
         const data = await response.json();
-        
+
+        console.log(data);  // API 응답을 콘솔로 확인
+
         if (data.items && data.items.length > 0) {
           // 랜덤으로 노래 선택
           const randomIndex = Math.floor(Math.random() * data.items.length);
           const randomSong = data.items[randomIndex];
           const videoId = randomSong.snippet.resourceId.videoId;
           const title = randomSong.snippet.title;
-          
+
+          console.log(`Video ID: ${videoId}`);  // videoId를 확인
+
           // 텍스트와 영상 업데이트
           document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
           document.getElementById("video-bg").innerHTML = `
             <iframe
-              src="https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=0&loop=1&playlist=${videoId}&modestbranding=1"
+              src="https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${videoId}&modestbranding=1"
               frameborder="0"
               allow="autoplay; encrypted-media"
               allowfullscreen
