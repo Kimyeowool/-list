@@ -21,27 +21,32 @@
       position: relative;
     }
 
-    .video-wrapper {
+    .background-video {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      overflow: hidden;
       z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
     }
 
-    .video-wrapper::before {
-      content: '';
+    .background-video iframe {
       position: absolute;
-      top: -20%;
-      left: -20%;
-      width: 140%;
-      height: 140%;
-      background: inherit;
-      filter: blur(20px);
-      transform: scale(1.1);
-      z-index: -1;
+      top: 50%;
+      left: 50%;
+      width: 120vw;
+      height: 120vh;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      filter: blur(8px); /* 흐림 효과 추가 */
+    }
+
+    .content {
+      text-align: center;
+      z-index: 1;
+      padding: 20px;
     }
 
     #video-frame {
@@ -54,13 +59,6 @@
       z-index: 2;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       border-radius: 12px;
-      background-color: black;
-    }
-
-    .content {
-      text-align: center;
-      z-index: 3;
-      padding: 20px;
     }
 
     button {
@@ -88,10 +86,8 @@
 </head>
 <body>
 
-  <!-- 하나의 영상 iframe만 사용 -->
-  <div class="video-wrapper" id="video-wrapper">
-    <iframe id="video-frame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-  </div>
+  <!-- 배경 비디오 -->
+  <div class="background-video" id="background-video"></div>
 
   <div class="content">
     <h1>오늘의 추천곡</h1>
@@ -101,6 +97,9 @@
       <button id="like-btn">❤️ 좋아요</button>
     </div>
   </div>
+
+  <!-- 우측 하단 작게 축소된 메인 영상 -->
+  <iframe id="video-frame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
   <script>
     const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
@@ -129,6 +128,17 @@
           videoFrame.src = videoUrl;
 
           document.getElementById("song-title").textContent = 오늘의 추천곡: ${title};
+
+          // 배경에 현재 iframe 복제해서 넣기
+          const background = document.getElementById("background-video");
+          background.innerHTML = ''; // 기존 iframe 제거
+
+          const clone = videoFrame.cloneNode(); // 복제
+          clone.removeAttribute("id");
+          clone.muted = true;
+          clone.setAttribute("controls", "0");
+          clone.style.pointerEvents = "none";
+          background.appendChild(clone);
 
           updateLikeButton();
         } else {
