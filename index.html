@@ -18,7 +18,7 @@
       width: 100vw;
       height: 100vh;
       z-index: -1;
-      filter: blur(12px) brightness(0.4);
+      filter: blur(12px) brightness(0.3);
       pointer-events: none;
     }
 
@@ -90,21 +90,33 @@
 
       miniPlayer = new YT.Player('mini-player', {
         videoId: defaultId,
-        playerVars: { autoplay: 1, controls: 1 }
+        playerVars: {
+          autoplay: 1,
+          controls: 1
+        }
       });
 
       backgroundPlayer = new YT.Player('background-player', {
         videoId: defaultId,
-        playerVars: { autoplay: 1, controls: 0, mute: 1, loop: 1, playlist: defaultId },
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          mute: 1,
+          loop: 1,
+          playlist: defaultId,
+          modestbranding: 1,
+          playsinline: 1
+        },
         events: {
           onReady: e => e.target.mute()
         }
       });
 
+      // 1초마다 싱크 맞추기
       setInterval(() => {
         const t1 = miniPlayer?.getCurrentTime?.();
         const t2 = backgroundPlayer?.getCurrentTime?.();
-        if (t1 && t2 && Math.abs(t1 - t2) > 1) {
+        if (typeof t1 === 'number' && typeof t2 === 'number' && Math.abs(t1 - t2) > 1) {
           backgroundPlayer.seekTo(t1, true);
         }
       }, 1000);
