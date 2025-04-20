@@ -16,16 +16,16 @@
       overflow: hidden;
     }
 
-    .background-video {
+    .background-image {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: -2;
-      object-fit: cover;
+      background-size: cover;
+      background-position: center;
       filter: blur(25px);
-      pointer-events: none;
+      z-index: -2;
     }
 
     .content {
@@ -88,8 +88,8 @@
   </style>
 </head>
 <body>
-  <!-- 백그라운드 영상 -->
-  <iframe id="background" class="background-video" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen muted></iframe>
+  <!-- 배경 썸네일 -->
+  <div id="backgroundImage" class="background-image"></div>
 
   <!-- 중앙 컨텐츠 -->
   <div class="content">
@@ -136,14 +136,16 @@
         const item = data.items[index % data.items.length];
         const videoId = item.snippet.resourceId.videoId;
         const title = item.snippet.title;
+        const thumbnail = item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high?.url;
 
-        const backgroundUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&loop=1&playlist=${videoId}&mute=1&enablejsapi=1`;
+        // 썸네일 배경 설정
+        document.getElementById('backgroundImage').style.backgroundImage = `url('${thumbnail}')`;
+
+        // 미니플레이어 영상 설정
         const miniPlayerUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&loop=1&playlist=${videoId}&mute=1&enablejsapi=1`;
-
-        document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
-        document.getElementById('background').src = backgroundUrl;
         document.getElementById('miniVideo').src = miniPlayerUrl;
 
+        document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
         currentSong = { title, videoId };
       } catch (e) {
         alert("곡을 불러오는 중 오류가 발생했습니다.");
