@@ -84,8 +84,8 @@
 </head>
 <body>
 
-  <!-- 배경 영상 -->
-  <iframe id="background-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <!-- 배경 영상 (YouTube API로 제어됨) -->
+  <div id="background-video"></div>
 
   <!-- 미니 플레이어 -->
   <div class="mini-player">
@@ -103,11 +103,40 @@
     </div>
   </div>
 
+  <!-- YouTube API 로딩 -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
   <script>
     const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
     const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q';
 
     let currentSong = {};
+    let backgroundPlayer; // 배경 플레이어 제어용
+
+    // YouTube Iframe API 준비되면 실행되는 콜백
+    function onYouTubeIframeAPIReady() {
+      backgroundPlayer = new YT.Player('background-video', {
+        height: '100%',
+        width: '100%',
+        videoId: '', // 추천곡에서 채워짐
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          mute: 1,
+          loop: 1,
+          playlist: '', // 추천곡에서 채워짐
+          modestbranding: 1,
+          rel: 0,
+          playsinline: 1
+        },
+        events: {
+          onReady: (event) => {
+            event.target.mute();
+            event.target.playVideo();
+          }
+        }
+      });
+    }
 
     async function getRandomSongFromPlaylist() {
       const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
@@ -124,12 +153,18 @@
 
           currentSong = { videoId, title };
 
+          // 메인 미니 플레이어
           const mainUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
-          const bgUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${videoId}&modestbranding=1&rel=0&playsinline=1&enablejsapi=1`;
-
-
           document.getElementById("main-video").src = mainUrl;
-          document.getElementById("background-video").src = bgUrl;
+
+          // 배경 영상 재생
+          if (backgroundPlayer && backgroundPlayer.loadVideoById) {
+            backgroundPlayer.loadVideoById({
+              videoId: videoId,
+              suggestedQuality: 'large'
+            });
+            backgroundPlayer.setLoop(true);
+          }
 
           document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
           updateLikeButton();
@@ -141,6 +176,8 @@
         alert("곡을 불러오는 중 오류가 발생했습니다.");
       }
     }
+
+    document.getElementById("recommend-btn").addEventListener("click", getRandomSongFromPlaylist);
 
     document.getElementById("like-btn").addEventListener("click", () => {
       let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
@@ -187,8 +224,11 @@
       likeBtn.classList.toggle("liked", exists);
     }
 
-    document.getElementById("recommend-btn").addEventListener("click", getRandomSongFromPlaylist);
-    window.onload = getRandomSongFromPlaylist;
+    // 페이지 로드시 추천곡 자동 요청
+    window.onload = () => {
+      // Iframe API 로드 직후 실행되므로, 약간 딜레이를 주는 게 안전
+      setTimeout(getRandomSongFromPlaylist, 1000);
+    };
   </script>
 
 </body>
