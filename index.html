@@ -3,42 +3,227 @@
 <head>
   <meta charset="UTF-8">
   <title>오늘의 추천곡</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* 비디오 스타일 */
-    #bg-video {
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      font-family: 'Pretendard', sans-serif;
+      background: black;
+      overflow: hidden;
+      color: white;
+    }
+
+    .video-background {
       position: fixed;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: cover;
+      overflow: hidden;
       z-index: -1;
       filter: blur(8px) brightness(0.5);
     }
 
-    /* 콘텐츠 스타일 */
+    .video-background iframe {
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+    }
+
     .content {
-      position: relative;
-      z-index: 1;
-      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       text-align: center;
-      padding-top: 20%;
+      z-index: 2;
+      position: relative;
+    }
+
+    .text-container {
+      font-size: 2em;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 3px solid white;
+      width: 0;
+      animation: typing 4s steps(30, end) forwards, blink 0.75s step-end infinite;
+      margin-bottom: 30px;
+    }
+
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 100% }
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent }
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .buttons button, .buttons a, .buttons input[type="date"] {
+      padding: 10px 20px;
+      font-size: 14px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      background-color: white;
+      color: black;
+      transition: 0.3s;
+      text-decoration: none;
+    }
+
+    .buttons button:hover, .buttons a:hover {
+      background-color: #ff4081;
+      color: white;
+    }
+
+    .liked {
+      background-color: #ff4081 !important;
+      color: white !important;
+    }
+
+    @media (max-width: 768px) {
+      .text-container { font-size: 1.5em; }
     }
   </style>
 </head>
 <body>
 
-  <!-- 배경 비디오 -->
-  <video autoplay muted loop id="bg-video">
-    <source src="iu_love_poem.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <!-- 배경 영상 -->
+  <div class="video-background" id="video-bg"></div>
 
   <!-- 콘텐츠 -->
   <div class="content">
-    <h1>오늘의 추천곡</h1>
-    <p>IU - Love Poem</p>
+    <div class="text-container" id="song-title">오늘의 추천곡</div>
+
+    <div class="buttons">
+      <input type="date" id="datePicker">
+      <button id="likeBtn">❤️ 좋아요</button>
+      <button id="shareBtn">📤 공유</button>
+      <a href="#" id="watchLink" target="_blank">🔗 유튜브에서 보기</a>
+      <button id="viewLikesBtn">💖 좋아요 목록</button>
+    </div>
   </div>
+
+  <script>
+    const songs = [
+      { title: "Never Gonna Give You Up", videoId: "dQw4w9WgXcQ" },
+      { title: "IU - Love Poem", videoId: "0-q1KafFCLU" },
+      { title: "NewJeans - Ditto", videoId: "Km71Rr9K-Bw" },
+      { title: "Coldplay - Yellow", videoId: "yKNxeF4KMsY" },
+      { title: "TAEYEON - INVU", videoId: "ZeerrnuLi5E" },
+      { title: "LE SSERAFIM - UNFORGIVEN", videoId: "UBURTj20HXI" },
+      { title: "Jung Kook - Standing Next to You", videoId: "QXSocE_M1G4" }
+    ];
+
+    function getHashIndex(input, max) {
+      let hash = 0;
+      for (let i = 0; i < input.length; i++) {
+        hash = (hash << 5) - hash + input.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash) % max;
+    }
+
+    let currentSong = null;
+
+    function showSongByDate(dateStr) {
+      const index = getHashIndex(dateStr, songs.length);
+      currentSong = songs[index];
+
+      // 텍스트
+      document.getElementById("song-title").textContent = `오늘의 추천곡 : ${currentSong.title}`;
+
+      // 영상
+      document.getElementById("video-bg").innerHTML = `
+        <iframe
+          src="https://www.youtube.com/embed/${currentSong.videoId}?autoplay=1&controls=0&mute=0&loop=1&playlist=${currentSong.videoId}&modestbranding=1"
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+      `;
+
+      // 링크 업데이트
+      document.getElementById("watchLink").href = `https://www.youtube.com/watch?v=${currentSong.videoId}`;
+
+      // 좋아요 상태 체크
+      const likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
+      const likeBtn = document.getElementById("likeBtn");
+      if (likedSongs.find(s => s.date === dateStr)) {
+        likeBtn.classList.add("liked");
+        likeBtn.textContent = "💖 좋아요!";
+      } else {
+        likeBtn.classList.remove("liked");
+        likeBtn.textContent = "❤️ 좋아요";
+      }
+    }
+
+    // 초기 날짜 = 오늘
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById("datePicker").value = today;
+    showSongByDate(today);
+
+    // 날짜 변경
+    document.getElementById("datePicker").addEventListener("change", e => {
+      showSongByDate(e.target.value);
+    });
+
+    // 좋아요
+    document.getElementById("likeBtn").addEventListener("click", () => {
+      const dateStr = document.getElementById("datePicker").value;
+      let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
+      const existing = likedSongs.find(s => s.date === dateStr);
+
+      if (!existing) {
+        likedSongs.push({ date: dateStr, title: currentSong.title, videoId: currentSong.videoId });
+        localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
+        alert("좋아요에 추가되었습니다 💖");
+      } else {
+        likedSongs = likedSongs.filter(s => s.date !== dateStr);
+        localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
+        alert("좋아요에서 제거되었습니다 💔");
+      }
+
+      showSongByDate(dateStr); // 상태 갱신
+    });
+
+    // 공유
+    document.getElementById("shareBtn").addEventListener("click", async () => {
+      const dateStr = document.getElementById("datePicker").value;
+      const shareData = {
+        title: "오늘의 추천곡",
+        text: `추천곡 (${dateStr}): ${currentSong.title}`,
+        url: `https://www.youtube.com/watch?v=${currentSong.videoId}`
+      };
+      try {
+        if (navigator.share) await navigator.share(shareData);
+        else alert("이 브라우저는 공유를 지원하지 않아요 😢");
+      } catch (err) {
+        console.error("공유 실패:", err);
+      }
+    });
+
+    // 좋아요 목록 보기
+    document.getElementById("viewLikesBtn").addEventListener("click", () => {
+      const likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
+      if (likedSongs.length === 0) {
+        alert("좋아요한 곡이 아직 없어요 💔");
+        return;
+      }
+
+      let list = likedSongs.map(s => `${s.date} - ${s.title}`).join("\n");
+      alert("💖 내가 좋아요한 곡 목록:\n\n" + list);
+    });
+  </script>
 
 </body>
 </html>
