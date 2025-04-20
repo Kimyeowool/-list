@@ -27,6 +27,17 @@
       pointer-events: none;
     }
 
+    #bgVideo iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      pointer-events: none;
+      z-index: -2;
+    }
+
     .content {
       position: absolute;
       top: 50%;
@@ -130,7 +141,8 @@
     let bgPlayer = null;
 
     function onYouTubeIframeAPIReady() {
-      playGenre('indie'); // 웹페이지 로드시 인디곡 자동 재생
+      // 자동으로 인디 장르 재생
+      playGenre('indie');
     }
 
     async function playGenre(genre) {
@@ -157,49 +169,47 @@
     }
 
     function loadVideoPlayers(videoId) {
+      if (miniPlayer) miniPlayer.destroy();
+      if (bgPlayer) bgPlayer.destroy();
+
       const origin = window.location.origin;
 
-      // 이전 플레이어 제거
-      if (bgPlayer) bgPlayer.destroy();
-      if (miniPlayer) miniPlayer.destroy();
-      document.getElementById('bgVideo').innerHTML = '';
-      document.getElementById('miniVideo').innerHTML = '';
-
-      // 배경 영상 (음소거 + blur)
+      // 배경 플레이어
       bgPlayer = new YT.Player('bgVideo', {
-        videoId,
+        videoId: videoId,
         playerVars: {
           autoplay: 1,
-          mute: 1,
           loop: 1,
+          mute: 1,
           playlist: videoId,
           controls: 0,
+          showinfo: 0,
           modestbranding: 1,
           rel: 0,
-          playsinline: 1,
-          origin: origin
+          origin: origin,
+          playsinline: 1
         },
         events: {
-          onReady: e => e.target.playVideo()
+          onReady: (e) => e.target.playVideo()
         }
       });
 
-      // 미니 플레이어 (소리 포함)
+      // 미니 플레이어
       miniPlayer = new YT.Player('miniVideo', {
-        videoId,
+        videoId: videoId,
         playerVars: {
           autoplay: 1,
-          mute: 0,
           loop: 1,
+          mute: 0,
           playlist: videoId,
           controls: 1,
           modestbranding: 1,
           rel: 0,
-          playsinline: 1,
-          origin: origin
+          origin: origin,
+          playsinline: 1
         },
         events: {
-          onReady: e => {
+          onReady: (e) => {
             e.target.unMute();
             e.target.playVideo();
           }
