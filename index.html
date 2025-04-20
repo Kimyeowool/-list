@@ -1,10 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>추천곡</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: black;
+      font-family: 'Arial', sans-serif;
+    }
+
+    #background-player {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      filter: blur(12px) brightness(0.4);
+      pointer-events: none;
+    }
+
+    #mini-player {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 320px;
+      height: 180px;
+      z-index: 10;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid white;
+    }
+
+    .content {
+      position: relative;
+      z-index: 20;
+      color: white;
+      text-align: center;
+      margin-top: 250px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
 <body>
-  <!-- ... 생략: mini-player, background-player, 버튼 등 ... -->
+  <div id="background-player"></div>
+  <div id="mini-player"></div>
 
-  <!-- 유튜브 API 먼저 로딩 -->
-  <script src="https://www.youtube.com/iframe_api"></script>
+  <div class="content">
+    <h1>오늘의 추천곡</h1>
+    <p>장르를 선택해 주세요</p>
+    <button onclick="fetchRandomSong('indie')">🎧 인디</button>
+    <button onclick="fetchRandomSong('pop')">🎤 팝송</button>
+    <button onclick="fetchRandomSong('japanese')">🎌 일본</button>
+  </div>
 
-  <!-- 우리 스크립트는 맨 마지막에 -->
   <script>
     let miniPlayer, backgroundPlayer;
 
@@ -37,23 +97,29 @@
 
       backgroundPlayer = new YT.Player('background-player', {
         videoId: defaultId,
-        playerVars: { autoplay: 1, controls: 0, mute: 1, loop: 1, playlist: defaultId },
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          mute: 1,
+          loop: 1,
+          playlist: defaultId
+        },
         events: {
           onReady: e => e.target.mute()
         }
       });
 
+      // 백그라운드 동기화
       setInterval(() => {
-        if (miniPlayer && backgroundPlayer &&
-            typeof miniPlayer.getCurrentTime === 'function' &&
-            typeof backgroundPlayer.getCurrentTime === 'function') {
-          const t1 = miniPlayer.getCurrentTime();
-          const t2 = backgroundPlayer.getCurrentTime();
-          if (Math.abs(t1 - t2) > 1) {
-            backgroundPlayer.seekTo(t1, true);
-          }
+        const t1 = miniPlayer.getCurrentTime?.();
+        const t2 = backgroundPlayer.getCurrentTime?.();
+        if (t1 !== undefined && t2 !== undefined && Math.abs(t1 - t2) > 1) {
+          backgroundPlayer.seekTo(t1, true);
         }
       }, 1000);
     }
   </script>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
 </body>
+</html>
