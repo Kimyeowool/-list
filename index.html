@@ -22,27 +22,19 @@
       position: relative;
     }
 
-    /* 하나의 iframe을 두 요소에서 공유하는 트릭: 배경용으로 확장 & 필터 */
-    #video-container {
+    /* 배경 영상 */
+    #background-video {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      overflow: hidden;
-      z-index: -1;
       pointer-events: none;
-    }
-
-    #video-frame {
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      filter: blur(30px) brightness(0.6);
+      z-index: -1;
+      filter: blur(30px) brightness(0.5);
       transform: scale(1.2);
     }
 
-    /* 우측하단 미니플레이어 */
     .mini-player {
       position: fixed;
       bottom: 20px;
@@ -93,14 +85,12 @@
 </head>
 <body>
 
-  <!-- 배경화면용 (필터 씌운 확대 영상) -->
-  <div id="video-container">
-    <iframe id="video-frame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-  </div>
+  <!-- 배경 영상 iframe (음소거) -->
+  <iframe id="background-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
-  <!-- 실제 영상 컨트롤용 미니플레이어 -->
+  <!-- 실제 재생되는 영상 (소리 있음) -->
   <div class="mini-player">
-    <iframe id="mini-video-frame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <iframe id="main-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
   </div>
 
   <div class="content">
@@ -133,14 +123,14 @@
 
           currentSong = { videoId, title };
 
-          const videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&mute=1`;
+          // 영상 URL 구성
+          const mainUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
+          const bgUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${videoId}`;
 
-          // 동기화된 하나의 영상 URL을 두 iframe에 동시에 세팅
-          document.getElementById("video-frame").src = videoUrl;
-          document.getElementById("mini-video-frame").src = videoUrl;
+          document.getElementById("main-video").src = mainUrl;
+          document.getElementById("background-video").src = bgUrl;
 
           document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
-
           updateLikeButton();
         } else {
           alert("재생목록에 곡이 없습니다.");
