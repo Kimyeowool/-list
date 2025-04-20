@@ -2,24 +2,17 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>오늘의 추천곡</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오늘의 추천곡</title>
   <style>
-    html, body {
+    body {
       margin: 0;
       padding: 0;
-      height: 100%;
-      background-color: black;
-      font-family: 'Pretendard', sans-serif;
+      background: black;
+      overflow-x: hidden;
+      font-family: sans-serif;
       color: white;
-      overflow: hidden;
-    }
-
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
+      text-align: center;
     }
 
     #background-player {
@@ -29,59 +22,42 @@
       width: 100vw;
       height: 100vh;
       z-index: -1;
-      filter: blur(30px);
-      transform: scale(1.2);
+      overflow: hidden;
       pointer-events: none;
     }
 
-    .mini-player {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 300px;
-      height: 170px;
-      z-index: 2;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    #background-player iframe {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      filter: brightness(0.3) blur(20px);
     }
 
-    .mini-player iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
+    .mini-player {
+      margin-top: 20px;
     }
 
     .content {
-      text-align: center;
-      z-index: 3;
-      padding: 20px;
+      position: relative;
+      z-index: 1;
+      padding: 2rem;
     }
 
-    button {
-      padding: 10px 20px;
-      border-radius: 8px;
-      background-color: white;
-      color: black;
+    .genre-buttons button,
+    #like-btn,
+    #show-likes-btn,
+    #share-btn {
+      margin: 5px;
+      padding: 10px 16px;
       font-size: 16px;
       border: none;
+      border-radius: 8px;
+      background-color: white;
       cursor: pointer;
-      margin: 5px;
-      transition: background-color 0.2s;
-    }
-
-    button:hover {
-      background-color: #ff4081;
-      color: white;
     }
 
     .liked {
-      background-color: #ff4081 !important;
-      color: white !important;
-    }
-
-    .genre-buttons {
-      margin-top: 10px;
+      background-color: #ffcccc !important;
     }
   </style>
 </head>
@@ -89,7 +65,7 @@
   <div id="background-player"></div>
 
   <div class="mini-player">
-    <iframe id="mini-player" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <div id="mini-player"></div>
   </div>
 
   <div class="content">
@@ -114,17 +90,32 @@
     const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
 
     const playlists = {
-      indie: 'PLu4x1UBAg4x8jMQKYLTvNtd4g9acj0qHZ',
+      indie: 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q',
       pop: 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d',
-      jpop: 'PLu4x1UBAg4x_MlfVLEAI-zzm2N0psLpiu'
+      jpop: 'PLu4x1UBAg4x8lyQztvvlOEBFAxC_F3TBU'
     };
 
     let currentSong = {};
     let backgroundPlayer = null;
+    let miniPlayer = null;
     let ytReady = false;
 
     function onYouTubeIframeAPIReady() {
       ytReady = true;
+
+      miniPlayer = new YT.Player('mini-player', {
+        height: '170',
+        width: '300',
+        videoId: '',
+        playerVars: {
+          autoplay: 1,
+          controls: 1,
+          modestbranding: 1,
+          rel: 0
+        }
+      });
+
+      setInterval(syncPlayers, 1000);
     }
 
     function createBackgroundPlayer(videoId) {
@@ -172,13 +163,29 @@
 
         currentSong = { videoId, title };
         document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
-        document.getElementById("mini-player").src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
-        
-        if (ytReady) createBackgroundPlayer(videoId);
+
+        if (ytReady) {
+          miniPlayer.loadVideoById(videoId);
+          createBackgroundPlayer(videoId);
+        }
+
         updateLikeButton();
       } catch (e) {
         console.error(e);
         alert("추천곡을 불러오는 중 문제가 발생했습니다.");
+      }
+    }
+
+    function syncPlayers() {
+      if (!miniPlayer || !backgroundPlayer) return;
+      if (!miniPlayer.getCurrentTime || !backgroundPlayer.getCurrentTime) return;
+
+      const miniTime = miniPlayer.getCurrentTime();
+      const bgTime = backgroundPlayer.getCurrentTime();
+      const diff = Math.abs(miniTime - bgTime);
+
+      if (diff > 1.0) {
+        backgroundPlayer.seekTo(miniTime, true);
       }
     }
 
