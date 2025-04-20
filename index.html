@@ -93,9 +93,9 @@
 </head>
 <body>
 
-  <!-- 배경 영상 -->
+  <!-- 백그라운드 영상 -->
   <div class="background-video">
-    <iframe id="bgVideo" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen muted></iframe>
+    <div id="bgVideo"></div>
   </div>
 
   <!-- 중앙 컨텐츠 -->
@@ -118,7 +118,7 @@
 
   <!-- 미니 유튜브 플레이어 -->
   <div id="miniPlayer">
-    <iframe id="miniVideo" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <div id="miniVideo"></div>
   </div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
@@ -132,6 +132,11 @@
     const likedSongs = [];
     let currentSong = null;
     let miniPlayer = null;
+    let bgPlayer = null;
+
+    function onYouTubeIframeAPIReady() {
+      // 이 함수는 플레이리스트 선택 후 호출됨
+    }
 
     async function playGenre(genre) {
       const playlistId = playlists[genre];
@@ -157,26 +162,51 @@
     }
 
     function loadVideoPlayers(videoId) {
+      // 기존 플레이어 제거
+      if (miniPlayer) miniPlayer.destroy();
+      if (bgPlayer) bgPlayer.destroy();
+
       const origin = window.location.origin;
 
-      // 백그라운드 (음소거 + 자동재생 + 블러)
-      const bgParams = `autoplay=1&loop=1&playlist=${videoId}&mute=1&controls=0&modestbranding=1&showinfo=0&enablejsapi=0&origin=${origin}`;
-      document.getElementById('bgVideo').src = `https://www.youtube.com/embed/${videoId}?${bgParams}`;
+      // 배경 플레이어 (음소거, 자동재생, 블러)
+      bgPlayer = new YT.Player('bgVideo', {
+        videoId: videoId,
+        playerVars: {
+          autoplay: 1,
+          loop: 1,
+          mute: 1,
+          playlist: videoId,
+          controls: 0,
+          showinfo: 0,
+          modestbranding: 1,
+          rel: 0,
+          origin: origin
+        },
+        events: {
+          onReady: (e) => e.target.playVideo()
+        }
+      });
 
-      // 미니플레이어 (소리 ON + 조작 가능)
-      const miniParams = `autoplay=1&loop=1&playlist=${videoId}&mute=0&controls=1&modestbranding=1&enablejsapi=1&origin=${origin}`;
-      document.getElementById('miniVideo').src = `https://www.youtube.com/embed/${videoId}?${miniParams}`;
-
-      // 미니플레이어 unmute
-      window.onYouTubeIframeAPIReady = function () {
-        miniPlayer = new YT.Player('miniVideo', {
-          events: {
-            onReady: function (event) {
-              setTimeout(() => event.target.unMute(), 500);
-            }
+      // 미니플레이어 (소리 재생, 조작 가능)
+      miniPlayer = new YT.Player('miniVideo', {
+        videoId: videoId,
+        playerVars: {
+          autoplay: 1,
+          loop: 1,
+          mute: 0,
+          playlist: videoId,
+          controls: 1,
+          modestbranding: 1,
+          rel: 0,
+          origin: origin
+        },
+        events: {
+          onReady: (e) => {
+            e.target.unMute();
+            e.target.playVideo();
           }
-        });
-      };
+        }
+      });
     }
 
     function likeSong() {
