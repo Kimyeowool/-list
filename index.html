@@ -11,8 +11,8 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      overflow: hidden;
       background: black;
+      overflow: hidden;
     }
 
     body {
@@ -28,7 +28,6 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      pointer-events: none;
       z-index: -1;
       filter: blur(30px) brightness(0.5);
       transform: scale(1.2);
@@ -84,8 +83,10 @@
 </head>
 <body>
 
+  <!-- 배경 영상 플레이어 삽입할 위치 -->
   <div id="background-video"></div>
 
+  <!-- 미니 플레이어 -->
   <div class="mini-player">
     <iframe id="main-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
   </div>
@@ -101,6 +102,7 @@
     </div>
   </div>
 
+  <!-- YouTube API -->
   <script src="https://www.youtube.com/iframe_api"></script>
 
   <script>
@@ -108,27 +110,29 @@
     const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q';
 
     let currentSong = {};
-    let backgroundPlayerReady = false;
-    let pendingVideoId = null;
+    let backgroundPlayer = null;
+    let ytApiReady = false;
 
-    let backgroundPlayer;
-
+    // YouTube API 준비되었을 때 호출됨
     function onYouTubeIframeAPIReady() {
-      backgroundPlayerReady = true;
-      if (pendingVideoId) {
-        createBackgroundPlayer(pendingVideoId);
-      }
+      ytApiReady = true;
     }
 
+    // 배경 플레이어 생성
     function createBackgroundPlayer(videoId) {
+      if (backgroundPlayer) {
+        backgroundPlayer.loadVideoById({ videoId });
+        return;
+      }
+
       backgroundPlayer = new YT.Player('background-video', {
         height: '100%',
         width: '100%',
         videoId: videoId,
         playerVars: {
           autoplay: 1,
-          controls: 0,
           mute: 1,
+          controls: 0,
           loop: 1,
           playlist: videoId,
           modestbranding: 1,
@@ -144,9 +148,9 @@
       });
     }
 
+    // 추천곡 받아오기
     async function getRandomSongFromPlaylist() {
       const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
-
       try {
         const response = await fetch(url);
         const data = await response.json();
@@ -159,20 +163,12 @@
 
           currentSong = { videoId, title };
 
-          // 미니 플레이어
-          const mainUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
-          document.getElementById("main-video").src = mainUrl;
+          // 미니 플레이어 업데이트
+          document.getElementById("main-video").src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
 
-          // 배경 영상
-          if (backgroundPlayerReady) {
-            if (!backgroundPlayer) {
-              createBackgroundPlayer(videoId);
-            } else {
-              backgroundPlayer.loadVideoById({ videoId: videoId, suggestedQuality: 'large' });
-              backgroundPlayer.setLoop(true);
-            }
-          } else {
-            pendingVideoId = videoId;
+          // 배경 플레이어 실행
+          if (ytApiReady) {
+            createBackgroundPlayer(videoId);
           }
 
           document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
@@ -181,13 +177,12 @@
           alert("재생목록에 곡이 없습니다.");
         }
       } catch (error) {
-        console.error('곡을 불러오는 중 오류:', error);
+        console.error("곡을 불러오는 중 오류:", error);
         alert("곡을 불러오는 중 오류가 발생했습니다.");
       }
     }
 
-    document.getElementById("recommend-btn").addEventListener("click", getRandomSongFromPlaylist);
-
+    // 좋아요 버튼
     document.getElementById("like-btn").addEventListener("click", () => {
       let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
       const exists = likedSongs.some(song => song.videoId === currentSong.videoId);
@@ -204,6 +199,7 @@
       updateLikeButton();
     });
 
+    // 좋아요 목록 보기
     document.getElementById("show-likes-btn").addEventListener("click", () => {
       const likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
       if (likedSongs.length === 0) {
@@ -214,6 +210,7 @@
       }
     });
 
+    // 공유하기
     document.getElementById("share-btn").addEventListener("click", () => {
       if (currentSong.videoId) {
         const link = `https://youtu.be/${currentSong.videoId}`;
@@ -229,14 +226,8 @@
       let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
       const likeBtn = document.getElementById("like-btn");
       const exists = likedSongs.some(song => song.videoId === currentSong.videoId);
-
       likeBtn.classList.toggle("liked", exists);
     }
-
-    window.onload = () => {
-      setTimeout(getRandomSongFromPlaylist, 1000);
-    };
   </script>
-
 </body>
 </html>
