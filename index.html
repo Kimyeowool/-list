@@ -23,12 +23,6 @@
       z-index: -1;
     }
 
-    .video-background iframe {
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-    }
-
     .content {
       display: flex;
       flex-direction: column;
@@ -92,23 +86,6 @@
     @media (max-width: 768px) {
       .text-container { font-size: 1.5em; }
     }
-
-    /* 변경된 부분: high-contrast -> forced-colors */
-    @media screen and (forced-colors: active) {
-        background-color: black;
-        color: white;
-      }
-
-      .buttons button, .buttons a, .buttons input[type="date"] {
-        background-color: white;
-        color: black;
-      }
-
-      .buttons button:hover, .buttons a:hover {
-        background-color: #ff4081;
-        color: white;
-      }
-    }
   </style>
 </head>
 <body>
@@ -159,14 +136,14 @@
       document.getElementById("song-title").textContent = `오늘의 추천곡 : ${currentSong.title}`;
 
       // 영상
-      document.getElementById("video-bg").innerHTML = ` 
-        <iframe
-          src="https://www.youtube.com/embed/${currentSong.videoId}?autoplay=1&controls=0&mute=0&loop=1&playlist=${currentSong.videoId}&modestbranding=1"
-          frameborder="0"
-          allow="autoplay; encrypted-media"
-          allowfullscreen
-        ></iframe>
-      `;
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://www.youtube.com/embed/${currentSong.videoId}?autoplay=1&controls=0&mute=0&loop=1&playlist=${currentSong.videoId}&modestbranding=1`;
+      iframe.frameBorder = '0';
+      iframe.allow = 'autoplay; encrypted-media';
+      iframe.allowFullscreen = true;
+
+      document.getElementById("video-bg").innerHTML = '';  // 기존 영상 지우기
+      document.getElementById("video-bg").appendChild(iframe);
 
       // 링크 업데이트
       document.getElementById("watchLink").href = `https://www.youtube.com/watch?v=${currentSong.videoId}`;
@@ -210,34 +187,6 @@
       }
 
       showSongByDate(dateStr); // 상태 갱신
-    });
-
-    // 공유
-    document.getElementById("shareBtn").addEventListener("click", async () => {
-      const dateStr = document.getElementById("datePicker").value;
-      const shareData = {
-        title: "오늘의 추천곡",
-        text: `추천곡 (${dateStr}): ${currentSong.title}`,
-        url: `https://www.youtube.com/watch?v=${currentSong.videoId}`
-      };
-      try {
-        if (navigator.share) await navigator.share(shareData);
-        else alert("이 브라우저는 공유를 지원하지 않아요 😢");
-      } catch (err) {
-        console.error("공유 실패:", err);
-      }
-    });
-
-    // 좋아요 목록 보기
-    document.getElementById("viewLikesBtn").addEventListener("click", () => {
-      const likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
-      if (likedSongs.length === 0) {
-        alert("좋아요한 곡이 아직 없어요 💔");
-        return;
-      }
-
-      let list = likedSongs.map(s => `${s.date} - ${s.title}`).join("\n");
-      alert("💖 내가 좋아요한 곡 목록:\n\n" + list);
     });
   </script>
 
