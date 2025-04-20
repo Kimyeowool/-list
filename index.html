@@ -40,6 +40,7 @@
       height: 120vh;
       transform: translate(-50%, -50%);
       pointer-events: none;
+      filter: blur(8px); /* 흐림 효과 추가 */
     }
 
     .content {
@@ -49,11 +50,15 @@
     }
 
     #video-frame {
-      width: 100%;
-      max-width: 600px;
-      height: 400px;
-      margin: 20px auto;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 300px;
+      height: 170px;
       border: none;
+      z-index: 2;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      border-radius: 12px;
     }
 
     button {
@@ -87,12 +92,14 @@
   <div class="content">
     <h1>오늘의 추천곡</h1>
     <div id="song-title">로딩 중...</div>
-    <iframe id="video-frame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     <div>
       <button id="recommend-btn">추천곡 받기</button>
       <button id="like-btn">❤️ 좋아요</button>
     </div>
   </div>
+
+  <!-- 우측 하단 작게 축소된 메인 영상 -->
+  <iframe id="video-frame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
   <script>
     const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
