@@ -130,7 +130,7 @@
     let bgPlayer = null;
 
     function onYouTubeIframeAPIReady() {
-      playGenre('indie'); // 페이지 열자마자 인디 음악 자동 재생
+      playGenre('indie'); // 웹페이지 로드시 인디곡 자동 재생
     }
 
     async function playGenre(genre) {
@@ -159,35 +159,34 @@
     function loadVideoPlayers(videoId) {
       const origin = window.location.origin;
 
-      // 이전 플레이어 제거 및 새 div 생성
-      if (miniPlayer) miniPlayer.destroy();
+      // 이전 플레이어 제거
       if (bgPlayer) bgPlayer.destroy();
+      if (miniPlayer) miniPlayer.destroy();
       document.getElementById('bgVideo').innerHTML = '';
       document.getElementById('miniVideo').innerHTML = '';
 
-      // 배경 플레이어
+      // 배경 영상 (음소거 + blur)
       bgPlayer = new YT.Player('bgVideo', {
-        videoId: videoId,
+        videoId,
         playerVars: {
           autoplay: 1,
           mute: 1,
           loop: 1,
           playlist: videoId,
           controls: 0,
-          showinfo: 0,
           modestbranding: 1,
           rel: 0,
-          origin: origin,
-          playsinline: 1
+          playsinline: 1,
+          origin: origin
         },
         events: {
           onReady: e => e.target.playVideo()
         }
       });
 
-      // 미니 플레이어
+      // 미니 플레이어 (소리 포함)
       miniPlayer = new YT.Player('miniVideo', {
-        videoId: videoId,
+        videoId,
         playerVars: {
           autoplay: 1,
           mute: 0,
@@ -196,8 +195,8 @@
           controls: 1,
           modestbranding: 1,
           rel: 0,
-          origin: origin,
-          playsinline: 1
+          playsinline: 1,
+          origin: origin
         },
         events: {
           onReady: e => {
