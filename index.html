@@ -67,7 +67,7 @@
       border: none;
       cursor: pointer;
       font-size: 16px;
-      margin: 10px;
+      margin: 10px 5px;
       transition: background-color 0.3s;
     }
 
@@ -84,10 +84,10 @@
 </head>
 <body>
 
-  <!-- 배경 영상 (음소거 + 자동반복) -->
+  <!-- 배경 영상 -->
   <iframe id="background-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
-  <!-- 미니 플레이어 (소리 있음) -->
+  <!-- 미니 플레이어 -->
   <div class="mini-player">
     <iframe id="main-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
   </div>
@@ -96,8 +96,10 @@
     <h1>오늘의 추천곡</h1>
     <div id="song-title">로딩 중...</div>
     <div>
-      <button id="recommend-btn">추천곡 받기</button>
+      <button id="recommend-btn">🎵 추천곡 받기</button>
       <button id="like-btn">❤️ 좋아요</button>
+      <button id="show-likes-btn">🧡 좋아요 목록</button>
+      <button id="share-btn">🔗 공유하기</button>
     </div>
   </div>
 
@@ -108,7 +110,7 @@
     let currentSong = {};
 
     async function getRandomSongFromPlaylist() {
-      const url = https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey};
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
 
       try {
         const response = await fetch(url);
@@ -122,14 +124,13 @@
 
           currentSong = { videoId, title };
 
-          // 영상 URL 구성
-          const mainUrl = https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1;
-          const bgUrl = https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${videoId};
+          const mainUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
+          const bgUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${videoId}&modestbranding=1&rel=0&playsinline=1`;
 
           document.getElementById("main-video").src = mainUrl;
           document.getElementById("background-video").src = bgUrl;
 
-          document.getElementById("song-title").textContent = 오늘의 추천곡: ${title};
+          document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
           updateLikeButton();
         } else {
           alert("재생목록에 곡이 없습니다.");
@@ -154,6 +155,27 @@
 
       localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
       updateLikeButton();
+    });
+
+    document.getElementById("show-likes-btn").addEventListener("click", () => {
+      const likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
+      if (likedSongs.length === 0) {
+        alert("좋아요한 곡이 없습니다.");
+      } else {
+        const titles = likedSongs.map(song => song.title).join('\n');
+        alert("❤️ 좋아요한 곡 목록:\n\n" + titles);
+      }
+    });
+
+    document.getElementById("share-btn").addEventListener("click", () => {
+      if (currentSong.videoId) {
+        const link = `https://youtu.be/${currentSong.videoId}`;
+        navigator.clipboard.writeText(link)
+          .then(() => alert("링크가 복사되었습니다:\n" + link))
+          .catch(() => alert("클립보드 복사 실패 😢"));
+      } else {
+        alert("먼저 곡을 추천받아주세요.");
+      }
     });
 
     function updateLikeButton() {
