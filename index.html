@@ -84,10 +84,8 @@
 </head>
 <body>
 
-  <!-- 배경 영상 (YouTube API로 제어됨) -->
   <div id="background-video"></div>
 
-  <!-- 미니 플레이어 -->
   <div class="mini-player">
     <iframe id="main-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
   </div>
@@ -103,7 +101,6 @@
     </div>
   </div>
 
-  <!-- YouTube API 로딩 -->
   <script src="https://www.youtube.com/iframe_api"></script>
 
   <script>
@@ -111,22 +108,32 @@
     const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q';
 
     let currentSong = {};
+    let backgroundPlayerReady = false;
+    let pendingVideoId = null;
+
     let backgroundPlayer;
 
     function onYouTubeIframeAPIReady() {
+      backgroundPlayerReady = true;
+      if (pendingVideoId) {
+        createBackgroundPlayer(pendingVideoId);
+      }
+    }
+
+    function createBackgroundPlayer(videoId) {
       backgroundPlayer = new YT.Player('background-video', {
         height: '100%',
         width: '100%',
-        videoId: '', // 초기 비워둠
+        videoId: videoId,
         playerVars: {
           autoplay: 1,
           controls: 0,
           mute: 1,
           loop: 1,
+          playlist: videoId,
           modestbranding: 1,
           rel: 0,
-          playsinline: 1,
-          playlist: '' // 나중에 설정됨
+          playsinline: 1
         },
         events: {
           onReady: event => {
@@ -152,21 +159,20 @@
 
           currentSong = { videoId, title };
 
-          // 미니 플레이어 업데이트
+          // 미니 플레이어
           const mainUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
           document.getElementById("main-video").src = mainUrl;
 
-          // 배경 영상 재생
-          if (backgroundPlayer && backgroundPlayer.loadVideoById) {
-            backgroundPlayer.loadVideoById(videoId);
-
-            // loop 작동을 위한 playlist 옵션 추가
-            backgroundPlayer.setOption("playerVars", {
-              loop: 1,
-              playlist: videoId
-            });
-
-            backgroundPlayer.playVideo();
+          // 배경 영상
+          if (backgroundPlayerReady) {
+            if (!backgroundPlayer) {
+              createBackgroundPlayer(videoId);
+            } else {
+              backgroundPlayer.loadVideoById({ videoId: videoId, suggestedQuality: 'large' });
+              backgroundPlayer.setLoop(true);
+            }
+          } else {
+            pendingVideoId = videoId;
           }
 
           document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
@@ -227,7 +233,6 @@
       likeBtn.classList.toggle("liked", exists);
     }
 
-    // 페이지 로드시 추천곡 자동 실행
     window.onload = () => {
       setTimeout(getRandomSongFromPlaylist, 1000);
     };
