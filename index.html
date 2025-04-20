@@ -25,6 +25,7 @@
       z-index: -2;
       object-fit: cover;
       filter: blur(25px) brightness(0.4);
+      pointer-events: none; /* 배경 클릭 방지 */
     }
 
     .content {
@@ -88,7 +89,13 @@
 </head>
 <body>
   <!-- 백그라운드 영상 -->
-  <iframe id="background" class="background-video" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <iframe
+    id="background"
+    class="background-video"
+    frameborder="0"
+    allow="autoplay; encrypted-media; clipboard-write; fullscreen; picture-in-picture"
+    allowfullscreen
+  ></iframe>
 
   <!-- 중앙 컨텐츠 -->
   <div class="content">
@@ -110,7 +117,12 @@
 
   <!-- 미니 유튜브 플레이어 -->
   <div id="miniPlayer">
-    <iframe id="miniVideo" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <iframe
+      id="miniVideo"
+      frameborder="0"
+      allow="autoplay; encrypted-media; clipboard-write; fullscreen; picture-in-picture"
+      allowfullscreen
+    ></iframe>
   </div>
 
   <script>
@@ -123,18 +135,18 @@
 
     async function playGenre(genre) {
       const playlistId = playlists[genre];
-      const index = Math.floor(Math.random() * 50);
       const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
 
       try {
         const res = await fetch(apiUrl);
         const data = await res.json();
-        const video = data.items[index % data.items.length];
+        const index = Math.floor(Math.random() * data.items.length);
+        const video = data.items[index];
         const videoId = video.snippet.resourceId.videoId;
         const title = video.snippet.title;
 
         const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}`;
-        
+
         document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
         document.getElementById('background').src = embedUrl;
         document.getElementById('miniVideo').src = embedUrl;
