@@ -122,23 +122,17 @@
 
           currentSong = { videoId, title };
 
-          const videoUrl = https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1;
-
-          const videoFrame = document.getElementById("video-frame");
-          videoFrame.src = videoUrl;
-
           document.getElementById("song-title").textContent = 오늘의 추천곡: ${title};
+          document.getElementById("video-frame").src = https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1;
 
-          // 배경에 현재 iframe 복제해서 넣기
-          const background = document.getElementById("background-video");
-          background.innerHTML = ''; // 기존 iframe 제거
-
-          const clone = videoFrame.cloneNode(); // 복제
-          clone.removeAttribute("id");
-          clone.muted = true;
-          clone.setAttribute("controls", "0");
-          clone.style.pointerEvents = "none";
-          background.appendChild(clone);
+          document.getElementById("background-video").innerHTML = 
+            <iframe
+              src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&modestbranding=1&playlist=${videoId}&rel=0"
+              frameborder="0"
+              allow="autoplay; encrypted-media"
+              allowfullscreen
+            ></iframe>
+          ;
 
           updateLikeButton();
         } else {
