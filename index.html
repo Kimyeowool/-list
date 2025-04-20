@@ -1,55 +1,65 @@
-<style>
-  body {
-    margin: 0;
-    padding: 0;
-    background: black;
-    overflow-x: hidden;
-    font-family: sans-serif;
-    color: white;
-    text-align: center;
-  }
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>오늘의 추천곡</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      overflow-x: hidden;
+      font-family: sans-serif;
+      color: white;
+      text-align: center;
+    }
 
-  #background-player {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: -1;
-    pointer-events: none;
-    filter: brightness(0.3) blur(20px);
-  }
+    #background-player iframe {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+      filter: brightness(0.3) blur(20px);
+    }
 
-  #mini-player {
-    width: 300px;
-    height: 170px;
-    margin: 20px auto;
-  }
+    .mini-player {
+      width: 300px;
+      height: 170px;
+      margin: 20px auto;
+    }
 
-  .content {
-    position: relative;
-    z-index: 1;
-    padding: 2rem;
-  }
+    #mini-player iframe {
+      width: 100%;
+      height: 100%;
+    }
 
-  .genre-buttons button,
-  #like-btn,
-  #show-likes-btn,
-  #share-btn {
-    margin: 5px;
-    padding: 10px 16px;
-    font-size: 16px;
-    border: none;
-    border-radius: 8px;
-    background-color: white;
-    cursor: pointer;
-  }
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 2rem;
+    }
 
-  .liked {
-    background-color: #ffcccc !important;
-  }
-</style>
+    .genre-buttons button,
+    #like-btn,
+    #show-likes-btn,
+    #share-btn {
+      margin: 5px;
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: white;
+      cursor: pointer;
+    }
 
+    .liked {
+      background-color: #ffcccc !important;
+    }
+  </style>
+</head>
 <body>
   <div id="background-player"></div>
 
@@ -85,8 +95,7 @@
     };
 
     let currentSong = {};
-    let backgroundPlayer = null;
-    let miniPlayer = null;
+    let backgroundPlayer, miniPlayer;
     let ytReady = false;
 
     function onYouTubeIframeAPIReady() {
@@ -105,8 +114,6 @@
       });
 
       backgroundPlayer = new YT.Player('background-player', {
-        height: '100%',
-        width: '100%',
         videoId: '',
         playerVars: {
           autoplay: 1,
@@ -114,12 +121,12 @@
           controls: 0,
           loop: 1,
           modestbranding: 1,
-          rel: 0
+          rel: 0,
+          playlist: ''
         },
         events: {
           onReady: e => {
             e.target.mute();
-            e.target.playVideo();
           }
         }
       });
@@ -127,9 +134,16 @@
       setInterval(syncPlayers, 1000);
     }
 
-    function createBackgroundPlayer(videoId) {
+    function playBothPlayers(videoId) {
+      if (miniPlayer && miniPlayer.loadVideoById) {
+        miniPlayer.loadVideoById(videoId);
+      }
+
       if (backgroundPlayer && backgroundPlayer.loadVideoById) {
-        backgroundPlayer.loadVideoById(videoId);
+        backgroundPlayer.loadVideoById({
+          videoId,
+          suggestedQuality: 'large'
+        });
       }
     }
 
@@ -153,8 +167,7 @@
         document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
 
         if (ytReady) {
-          miniPlayer.loadVideoById(videoId);
-          createBackgroundPlayer(videoId);
+          playBothPlayers(videoId);
         }
 
         updateLikeButton();
@@ -221,3 +234,4 @@
     });
   </script>
 </body>
+</html>
