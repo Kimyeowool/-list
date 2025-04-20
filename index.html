@@ -114,6 +114,7 @@
   </div>
 
   <script>
+    const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
     const playlists = {
       indie: 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q',
       pop: 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d',
@@ -123,20 +124,20 @@
     async function playGenre(genre) {
       const playlistId = playlists[genre];
       const index = Math.floor(Math.random() * 50);
-      const url = `https://www.youtube.com/embed?listType=playlist&list=${playlistId}&index=${index}&autoplay=1&mute=1&controls=0&loop=1`;
+      const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
 
-      const titleUrl = `https://www.youtube.com/feeds/videos.xml?playlist_id=${playlistId}`;
       try {
-        const res = await fetch(titleUrl);
-        const text = await res.text();
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(text, "text/xml");
-        const entries = xml.getElementsByTagName("entry");
-        const title = entries[index % entries.length].getElementsByTagName("title")[0].textContent;
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        const video = data.items[index % data.items.length];
+        const videoId = video.snippet.resourceId.videoId;
+        const title = video.snippet.title;
 
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}`;
+        
         document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
-        document.getElementById('background').src = url + '&playlist=' + playlistId;
-        document.getElementById('miniVideo').src = url + '&playlist=' + playlistId;
+        document.getElementById('background').src = embedUrl;
+        document.getElementById('miniVideo').src = embedUrl;
       } catch (e) {
         alert("곡을 불러오는 중 오류가 발생했습니다.");
         console.error(e);
