@@ -90,7 +90,7 @@
 
   <!-- 배경 유튜브 영상 -->
   <div class="background-video">
-    <div id="bgVideo"></div> <!-- 여기 iframe 직접 넣지 마! -->
+    <div id="bgVideo"></div>
   </div>
 
   <!-- 중앙 콘텐츠 -->
@@ -129,8 +129,10 @@
     let miniPlayer = null;
     let bgPlayer = null;
 
+    // 유튜브 API가 로드된 후 실행됨
     function onYouTubeIframeAPIReady() {
-      // API가 로드될 때 호출됨
+      // 인디 장르의 랜덤 곡 하나 자동 재생
+      playGenre('indie');
     }
 
     async function playGenre(genre) {
@@ -157,13 +159,12 @@
     }
 
     function loadVideoPlayers(videoId) {
-      // 기존 플레이어 제거
       if (miniPlayer) miniPlayer.destroy();
       if (bgPlayer) bgPlayer.destroy();
 
       const origin = window.location.origin;
 
-      // 배경 플레이어 (음소거 + 자동재생)
+      // 배경 플레이어
       bgPlayer = new YT.Player('bgVideo', {
         videoId: videoId,
         playerVars: {
@@ -176,14 +177,14 @@
           modestbranding: 1,
           rel: 0,
           origin: origin,
-          playsinline: 1 // ✅ 추가
+          playsinline: 1
         },
         events: {
           onReady: (e) => e.target.playVideo()
         }
       });
 
-      // 미니플레이어 (소리 켜짐 + 조작 가능)
+      // 미니 플레이어
       miniPlayer = new YT.Player('miniVideo', {
         videoId: videoId,
         playerVars: {
@@ -195,7 +196,7 @@
           modestbranding: 1,
           rel: 0,
           origin: origin,
-          playsinline: 1 // ✅ 추가
+          playsinline: 1
         },
         events: {
           onReady: (e) => {
