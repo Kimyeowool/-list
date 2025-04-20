@@ -92,6 +92,30 @@
     @media (max-width: 768px) {
       .text-container { font-size: 1.5em; }
     }
+
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      display: flex;
+      gap: 15px;
+      z-index: 3;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .controls button {
+      background-color: #ff4081;
+      color: white;
+      border-radius: 25px;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .controls button:hover {
+      background-color: #ff80ab;
+    }
+
   </style>
 </head>
 <body>
@@ -112,6 +136,12 @@
     </div>
   </div>
 
+  <!-- 최소한의 제어 버튼 -->
+  <div class="controls">
+    <button id="playPauseBtn">▶ 재생</button>
+    <button id="skipAdBtn">⏭ 광고 건너뛰기</button>
+  </div>
+
   <script>
     const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE'; // Your API key
     const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q'; // Your playlist ID
@@ -124,8 +154,6 @@
         const response = await fetch(url);
         const data = await response.json();
 
-        console.log(data);  // API 응답을 콘솔로 확인
-
         if (data.items && data.items.length > 0) {
           // 랜덤으로 노래 선택
           const randomIndex = Math.floor(Math.random() * data.items.length);
@@ -133,12 +161,11 @@
           const videoId = randomSong.snippet.resourceId.videoId;
           const title = randomSong.snippet.title;
 
-          console.log(`Video ID: ${videoId}`);  // videoId를 확인
-
           // 텍스트와 영상 업데이트
           document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
           document.getElementById("video-bg").innerHTML = `
             <iframe
+              id="videoPlayer"
               src="https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${videoId}&modestbranding=1"
               frameborder="0"
               allow="autoplay; encrypted-media"
@@ -209,7 +236,31 @@
       let list = likedSongs.map(s => `${s.date} - ${s.title}`).join("\n");
       alert("💖 내가 좋아요한 곡 목록:\n\n" + list);
     });
+
+    // 재생/일시정지 버튼 동작
+    document.getElementById("playPauseBtn").addEventListener("click", () => {
+      const iframe = document.getElementById("videoPlayer");
+      const player = new YT.Player(iframe);
+
+      if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+        document.getElementById("playPauseBtn").textContent = "▶ 재생";
+      } else {
+        player.playVideo();
+        document.getElementById("playPauseBtn").textContent = "❚❚ 일시정지";
+      }
+    });
+
+    // 광고 건너뛰기 버튼
+    document.getElementById("skipAdBtn").addEventListener("click", () => {
+      const iframe = document.getElementById("videoPlayer");
+      const player = new YT.Player(iframe);
+      player.seekTo(player.getDuration()); // 영상 끝으로 이동하여 광고 건너뛰기
+    });
   </script>
+
+  <!-- YouTube API 로드 -->
+  <script src="https://www.youtube.com/iframe_api"></script>
 
 </body>
 </html>
