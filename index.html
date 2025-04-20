@@ -104,6 +104,7 @@
     <div class="text-container" id="song-title">오늘의 추천곡</div>
 
     <div class="buttons">
+      <input type="date" id="datePicker">
       <button id="likeBtn">❤️ 좋아요</button>
       <button id="shareBtn">📤 공유</button>
       <a href="#" id="watchLink" target="_blank">🔗 유튜브에서 보기</a>
@@ -112,41 +113,88 @@
   </div>
 
   <script>
-    // YouTube API 키 입력
-    const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';  // 여기서 API 키를 입력하세요
-    const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q';  // 여기에 원하는 유튜브 재생목록 ID를 입력하세요
+    const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE'; // Your API key
+    const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q'; // Your playlist ID
 
-    // YouTube API를 사용하여 재생목록에서 비디오 ID들을 가져오는 함수
-    async function fetchPlaylistVideos() {
-      const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`);
-      const data = await response.json();
-      return data.items.map(item => item.snippet.resourceId.videoId);  // 비디오 ID 반환
+    // 랜덤으로 노래를 추천하는 함수
+    async function getRandomSongFromPlaylist() {
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
+      
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.items && data.items.length > 0) {
+          // 랜덤으로 노래 선택
+          const randomIndex = Math.floor(Math.random() * data.items.length);
+          const randomSong = data.items[randomIndex];
+          const videoId = randomSong.snippet.resourceId.videoId;
+          const title = randomSong.snippet.title;
+          
+          // 텍스트와 영상 업데이트
+          document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
+          document.getElementById("video-bg").innerHTML = `
+            <iframe
+              src="https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=0&loop=1&playlist=${videoId}&modestbranding=1"
+              frameborder="0"
+              allow="autoplay; encrypted-media"
+              allowfullscreen
+            ></iframe>
+          `;
+
+          document.getElementById("watchLink").href = `https://www.youtube.com/watch?v=${videoId}`;
+        }
+      } catch (error) {
+        console.error('Error fetching song from playlist:', error);
+      }
     }
 
-    // 비디오 중 랜덤으로 선택하여 해당 비디오를 표시하는 함수
-    async function showRandomSong() {
-      const videoIds = await fetchPlaylistVideos();
-      const randomVideoId = videoIds[Math.floor(Math.random() * videoIds.length)];  // 랜덤 비디오 선택
+    // 페이지 로드 시 랜덤 노래 추천
+    window.onload = () => {
+      getRandomSongFromPlaylist();
+    };
 
-      const videoUrl = `https://www.youtube.com/watch?v=${randomVideoId}`;
-      const embedUrl = `https://www.youtube.com/embed/${randomVideoId}?autoplay=1&controls=0&mute=0&loop=1&playlist=${randomVideoId}&modestbranding=1`;
+    // 날짜 변경 시 랜덤 노래 추천
+    document.getElementById("datePicker").addEventListener("change", () => {
+      getRandomSongFromPlaylist();
+    });
 
-      // 비디오와 제목 업데이트
-      document.getElementById("song-title").textContent = `오늘의 추천곡`;
-      document.getElementById("video-bg").innerHTML = `
-        <iframe
-          src="${embedUrl}"
-          frameborder="0"
-          allow="autoplay; encrypted-media"
-          allowfullscreen
-        ></iframe>
-      `;
+    // 좋아요 기능
+    document.getElementById("likeBtn").addEventListener("click", () => {
+      const dateStr = document.getElementById("datePicker").value;
+      let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
+      const existing = likedSongs.find(s => s.date === dateStr);
 
-      // 유튜브 링크 업데이트
-      document.getElementById("watchLink").href = videoUrl;
-    }
+      if (!existing) {
+        likedSongs.push({ date: dateStr, title: document.getElementById("song-title").textContent });
+        localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
+        alert("좋아요에 추가되었습니다 💖");
+      } else {
+        likedSongs = likedSongs.filter(s => s.date !== dateStr);
+        localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
+        alert("좋아요에서 제거되었습니다 💔");
+      }
 
-    // 좋아요 목록
+      getRandomSongFromPlaylist(); // 상태 갱신
+    });
+
+    // 공유 기능
+    document.getElementById("shareBtn").addEventListener("click", async () => {
+      const dateStr = document.getElementById("datePicker").value;
+      const shareData = {
+        title: "오늘의 추천곡",
+        text: `추천곡 (${dateStr}): ${document.getElementById("song-title").textContent}`,
+        url: document.getElementById("watchLink").href
+      };
+      try {
+        if (navigator.share) await navigator.share(shareData);
+        else alert("이 브라우저는 공유를 지원하지 않아요 😢");
+      } catch (err) {
+        console.error("공유 실패:", err);
+      }
+    });
+
+    // 좋아요 목록 보기
     document.getElementById("viewLikesBtn").addEventListener("click", () => {
       const likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
       if (likedSongs.length === 0) {
@@ -157,45 +205,6 @@
       let list = likedSongs.map(s => `${s.date} - ${s.title}`).join("\n");
       alert("💖 내가 좋아요한 곡 목록:\n\n" + list);
     });
-
-    // 좋아요 버튼 기능
-    document.getElementById("likeBtn").addEventListener("click", () => {
-      const likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
-      const currentSongTitle = document.getElementById("song-title").textContent;
-
-      let alreadyLiked = likedSongs.find(s => s.title === currentSongTitle);
-      if (alreadyLiked) {
-        likedSongs.splice(likedSongs.indexOf(alreadyLiked), 1);
-        alert("좋아요에서 제거되었습니다 💔");
-      } else {
-        likedSongs.push({ title: currentSongTitle });
-        alert("좋아요에 추가되었습니다 💖");
-      }
-
-      localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
-    });
-
-    // 페이지 로딩 시 랜덤 노래 표시
-    window.onload = () => {
-      showRandomSong();
-    };
-
-    // 공유 버튼 기능
-    document.getElementById("shareBtn").addEventListener("click", async () => {
-      const videoUrl = document.getElementById("watchLink").href;
-      const shareData = {
-        title: "오늘의 추천곡",
-        text: `오늘의 추천곡: ${document.getElementById("song-title").textContent}`,
-        url: videoUrl
-      };
-      try {
-        if (navigator.share) await navigator.share(shareData);
-        else alert("이 브라우저는 공유를 지원하지 않아요 😢");
-      } catch (err) {
-        console.error("공유 실패:", err);
-      }
-    });
-
   </script>
 
 </body>
