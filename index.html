@@ -2,71 +2,54 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>오늘의 추천곡</title>
-  <link rel="icon" href="낙낙.png" type="image/png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Today's Song</title>
   <style>
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
       height: 100%;
       font-family: 'Arial', sans-serif;
-      background-color: #000;
+      background-color: black;
       color: white;
       overflow: hidden;
     }
 
-    .background-video {
+    .background-container {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
       z-index: -2;
-      object-fit: cover;
-      /* 어둡게 처리 제거됨 */
-      filter: blur(25px);
+      overflow: hidden;
+    }
+
+    .background-container iframe {
+      width: 100vw;
+      height: 100vh;
+      filter: blur(20px); /* ✅ 블러만 적용 */
+      border: none;
     }
 
     .content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      position: relative;
+      z-index: 1;
       text-align: center;
+      padding-top: 20vh;
     }
 
-    h1 {
-      font-size: 2.5em;
-      margin-bottom: 0.5em;
+    .buttons {
+      margin-top: 20px;
     }
 
-    #songTitle {
-      font-size: 1.1em;
-      margin-bottom: 1.5em;
-    }
-
-    .button-group {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 15px;
-    }
-
-    .btn {
-      background: white;
-      color: black;
+    button {
+      margin: 5px;
       padding: 10px 16px;
-      border: none;
       border-radius: 8px;
-      font-size: 0.95em;
+      border: none;
+      font-size: 16px;
       cursor: pointer;
-      transition: 0.2s ease;
-    }
-
-    .btn:hover {
-      background: #eee;
     }
 
     #miniPlayer {
@@ -74,111 +57,52 @@
       bottom: 20px;
       right: 20px;
       width: 200px;
-      height: 200px;
-      border-radius: 10px;
+      height: 113px;
+      z-index: 2;
+      border-radius: 12px;
       overflow: hidden;
-      z-index: 10;
-      box-shadow: 0 0 10px rgba(0,0,0,0.6);
     }
 
-    iframe {
+    #miniVideo {
       width: 100%;
       height: 100%;
+      border: none;
     }
   </style>
 </head>
 <body>
-  <!-- 백그라운드 영상 -->
-  <iframe id="background" class="background-video" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen muted></iframe>
+  <!-- ✅ 배경 유튜브 영상 -->
+  <div class="background-container">
+    <iframe id="backgroundPlayer" allowfullscreen allow="autoplay; encrypted-media;"></iframe>
+  </div>
 
-  <!-- 중앙 컨텐츠 -->
+  <!-- ✅ 메인 콘텐츠 -->
   <div class="content">
     <h1>Today's recommended song</h1>
-    <div id="songTitle">장르를 선택해 주세요</div>
-
-    <div class="button-group">
-      <button class="btn" onclick="playGenre('indie')">🎧 인디</button>
-      <button class="btn" onclick="playGenre('pop')">✏️ 팝송</button>
-      <button class="btn" onclick="playGenre('japan')">🎌 일본</button>
-    </div>
-
-    <div class="button-group">
-      <button class="btn" onclick="likeSong()">❤️ 좋아요</button>
-      <button class="btn" onclick="showLikes()">🧡 좋아요 목록</button>
-      <button class="btn" onclick="shareSong()">🔗 공유하기</button>
+    <p>오늘의 추천곡: <span id="songTitle">Cecil Hotel</span></p>
+    <div class="buttons">
+      <button>🎧 인디</button>
+      <button>✏️ 팝송</button>
+      <button>🌏 일본</button>
+      <br />
+      <button>❤️ 좋아요</button>
+      <button>🧡 좋아요 목록</button>
+      <button>📎 공유하기</button>
     </div>
   </div>
 
-  <!-- 미니 유튜브 플레이어 -->
+  <!-- ✅ 미니 유튜브 플레이어 -->
   <div id="miniPlayer">
-    <iframe id="miniVideo" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <iframe id="miniVideo" allowfullscreen allow="autoplay; encrypted-media;"></iframe>
   </div>
 
+  <!-- ✅ 스크립트 -->
   <script>
-    const playlists = {
-      indie: 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q',
-      pop: 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d',
-      japan: 'PLu4x1UBAg4x8lyQztvvlOEBFAxC_F3TBU'
-    };
+    const videoId = "Vo6x51_nVAc"; // ✅ 같은 유튜브 영상 ID
+    const videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=1&playlist=${videoId}&loop=1`;
 
-    const likedSongs = [];
-    let currentSong = null;
-
-    async function playGenre(genre) {
-      const playlistId = playlists[genre];
-      const index = Math.floor(Math.random() * 50);
-      const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
-      const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
-
-      try {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-        const item = data.items[index % data.items.length];
-        const videoId = item.snippet.resourceId.videoId;
-        const title = item.snippet.title;
-
-        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&loop=1&playlist=${videoId}`;
-
-        document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
-        document.getElementById('background').src = embedUrl + '&mute=1';
-        document.getElementById('miniVideo').src = embedUrl;
-
-        currentSong = { title, videoId };
-      } catch (e) {
-        alert("곡을 불러오는 중 오류가 발생했습니다.");
-        console.error(e);
-      }
-    }
-
-    function likeSong() {
-      if (currentSong && !likedSongs.find(s => s.videoId === currentSong.videoId)) {
-        likedSongs.push(currentSong);
-        alert(`'${currentSong.title}'을(를) 좋아요에 추가했습니다.`);
-      } else {
-        alert('이미 좋아요를 누르셨거나 노래가 없습니다.');
-      }
-    }
-
-    function showLikes() {
-      if (likedSongs.length === 0) {
-        alert('아직 좋아요한 곡이 없습니다.');
-      } else {
-        const list = likedSongs.map(song => `🎵 ${song.title}`).join('\n');
-        alert('❤️ 좋아요 목록:\n\n' + list);
-      }
-    }
-
-    function shareSong() {
-      if (!currentSong) {
-        alert('먼저 노래를 재생해주세요.');
-        return;
-      }
-
-      const shareUrl = `https://www.youtube.com/watch?v=${currentSong.videoId}`;
-      navigator.clipboard.writeText(shareUrl)
-        .then(() => alert('공유 링크가 클립보드에 복사되었습니다!'))
-        .catch(err => alert('링크 복사에 실패했습니다.'));
-    }
+    document.getElementById("backgroundPlayer").src = videoUrl;
+    document.getElementById("miniVideo").src = videoUrl;
   </script>
 </body>
 </html>
