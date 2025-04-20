@@ -144,7 +144,7 @@
 
     async function fetchRandomSong() {
       if (!ytReady) {
-        alert("유튜브 API가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.");
+        console.warn("YouTube API 아직 준비 안 됨.");
         return;
       }
 
@@ -217,6 +217,16 @@
       navigator.clipboard.writeText(url)
         .then(() => alert("링크가 복사되었습니다:\n" + url))
         .catch(() => alert("복사 실패"));
+    });
+
+    // ✅ 유튜브 API 준비되면 자동 실행
+    window.addEventListener("load", () => {
+      const waitUntilReady = setInterval(() => {
+        if (ytReady) {
+          fetchRandomSong();
+          clearInterval(waitUntilReady);
+        }
+      }, 200);
     });
   </script>
   <script src="https://www.youtube.com/iframe_api"></script>
