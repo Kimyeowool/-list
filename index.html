@@ -83,7 +83,7 @@
 </head>
 <body>
 
-  <!-- 배경 영상 -->
+  <!-- 배경 영상 (YouTube IFrame API로 제어) -->
   <div id="background-player"></div>
 
   <!-- 미니 플레이어 -->
@@ -113,16 +113,17 @@
     let backgroundPlayer = null;
     let ytReady = false;
 
-    // API 로드 완료 시 호출됨
     function onYouTubeIframeAPIReady() {
       ytReady = true;
     }
 
-    function createOrUpdateBackgroundPlayer(videoId) {
+    function createBackgroundPlayer(videoId) {
       if (backgroundPlayer) {
         backgroundPlayer.loadVideoById(videoId);
       } else {
         backgroundPlayer = new YT.Player('background-player', {
+          width: '100%',
+          height: '100%',
           videoId: videoId,
           playerVars: {
             autoplay: 1,
@@ -132,7 +133,7 @@
             playlist: videoId,
             modestbranding: 1,
             rel: 0,
-            playsinline: 1
+            showinfo: 0
           },
           events: {
             onReady: (event) => {
@@ -161,12 +162,9 @@
 
         currentSong = { videoId, title };
         document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
-        document.getElementById("mini-player").src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
+        document.getElementById("mini-player").src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&enablejsapi=1&rel=0`;
 
-        if (ytReady) {
-          createOrUpdateBackgroundPlayer(videoId);
-        }
-
+        if (ytReady) createBackgroundPlayer(videoId);
         updateLikeButton();
       } catch (e) {
         console.error(e);
@@ -217,6 +215,11 @@
       navigator.clipboard.writeText(url)
         .then(() => alert("링크가 복사되었습니다:\n" + url))
         .catch(() => alert("복사 실패"));
+    });
+
+    // 첫 로딩 시 자동 추천
+    window.addEventListener('load', () => {
+      fetchRandomSong();
     });
   </script>
 </body>
