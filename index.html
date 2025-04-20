@@ -2,15 +2,17 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Today's Song Recommendation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>오늘의 추천곡</title>
+  <link rel="icon" href="낙낙.png" type="image/png" />
   <style>
     body, html {
       margin: 0;
       padding: 0;
       height: 100%;
+      font-family: 'Arial', sans-serif;
       background-color: #000;
       color: white;
-      font-family: 'Arial', sans-serif;
       overflow: hidden;
     }
 
@@ -20,36 +22,50 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: -1;
-      pointer-events: none;
-      filter: blur(20px) brightness(0.4);
+      z-index: -2;
+      object-fit: cover;
+      filter: blur(25px) brightness(0.4);
     }
 
     .content {
-      position: relative;
-      z-index: 1;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       text-align: center;
-      top: 30%;
     }
 
     h1 {
-      font-size: 2.5rem;
-      font-weight: bold;
+      font-size: 2.5em;
+      margin-bottom: 0.5em;
     }
 
-    .buttons {
-      margin-top: 20px;
+    #songTitle {
+      font-size: 1.1em;
+      margin-bottom: 1.5em;
     }
 
-    button {
-      margin: 5px;
-      padding: 10px 15px;
-      border-radius: 10px;
-      border: none;
-      font-size: 1rem;
-      cursor: pointer;
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .btn {
       background: white;
       color: black;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95em;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #eee;
     }
 
     #miniPlayer {
@@ -57,63 +73,39 @@
       bottom: 20px;
       right: 20px;
       width: 200px;
-      height: 112px;
-      z-index: 2;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .liked-songs {
-      display: none;
-      position: absolute;
-      background: white;
-      color: black;
-      padding: 10px;
+      height: 200px;
       border-radius: 10px;
-      width: 250px;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 5;
+      overflow: hidden;
+      z-index: 10;
+      box-shadow: 0 0 10px rgba(0,0,0,0.6);
     }
 
-    .liked-songs ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    iframe {
+      width: 100%;
+      height: 100%;
     }
-
-    .liked-songs li {
-      padding: 5px 0;
-      border-bottom: 1px solid #ccc;
-    }
-
   </style>
 </head>
 <body>
-  <!-- 배경 영상 -->
+  <!-- 백그라운드 영상 -->
   <iframe
     id="background"
     class="background-video"
+    src="https://www.youtube.com/embed/ZcQ88BYcS1E?autoplay=1&mute=1&controls=0&loop=1&playlist=ZcQ88BYcS1E"
     frameborder="0"
     allow="autoplay; encrypted-media"
     allowfullscreen
-    src="https://www.youtube.com/embed/ZcQ88BYcS1E?autoplay=1&mute=1&controls=0&loop=1&playlist=ZcQ88BYcS1E">
-  </iframe>
+  ></iframe>
 
+  <!-- 중앙 컨텐츠 -->
   <div class="content">
-    <h1>Today's<br />recommended song</h1>
-    <p>오늘의 추천곡: <span id="song-title">sokodomo - 회전목마 (Feat. Zion.T, 원슈타인) (Prod. Slom) | 쇼미더머니 10 Episode 2</span></p>
-    <div class="buttons">
-      <button onclick="playGenre('indie')">🎧 인디</button>
-      <button onclick="playGenre('pop')">✏️ 팝송</button>
-      <button onclick="playGenre('japan')">🗾 일본</button><br />
-      <button onclick="likeSong()">❤️ 좋아요</button>
-      <button onclick="toggleLikedSongs()">🧡 좋아요 목록</button>
-      <button onclick="shareSong()">🔗 공유하기</button>
-    </div>
-    <div class="liked-songs" id="likedSongs">
-      <ul id="likedList"></ul>
+    <h1>Today's recommended song</h1>
+    <div id="songTitle">ZcQ88BYcS1E</div>
+
+    <div class="button-group">
+      <button class="btn" onclick="like()">❤️ 좋아요</button>
+      <button class="btn" onclick="showLikes()">🧡 좋아요 목록</button>
+      <button class="btn" onclick="share()">🔗 공유하기</button>
     </div>
   </div>
 
@@ -121,70 +113,39 @@
   <div id="miniPlayer">
     <iframe
       id="miniFrame"
-      width="100%"
-      height="100%"
+      src="https://www.youtube.com/embed/ZcQ88BYcS1E?autoplay=1"
       frameborder="0"
       allow="autoplay; encrypted-media"
       allowfullscreen
-      src="https://www.youtube.com/embed/ZcQ88BYcS1E?autoplay=1">
-    </iframe>
+    ></iframe>
   </div>
 
   <script>
-    const genrePlaylists = {
-      indie: ['https://www.youtube.com/embed/dJYGatp4SzY', 'https://www.youtube.com/embed/CQ1Jt0bE1Jg'],
-      pop: ['https://www.youtube.com/embed/HgzGwKwLmgM', 'https://www.youtube.com/embed/tgbNymZ7vqY'],
-      japan: ['https://www.youtube.com/embed/q6EoRBvdVPQ', 'https://www.youtube.com/embed/GRxofEmo3HA']
-    };
+    const likedVideos = [];
 
-    let likedSongs = [];
-
-    function playGenre(genre) {
-      const songs = genrePlaylists[genre];
-      const randomUrl = songs[Math.floor(Math.random() * songs.length)];
-      document.getElementById('miniFrame').src = `${randomUrl}?autoplay=1`;
-      document.getElementById('background').src = `${randomUrl}?autoplay=1&mute=1&controls=0&loop=1&playlist=${getVideoId(randomUrl)}`;
-      document.getElementById('song-title').innerText = `Genre: ${genre}`;
-    }
-
-    function likeSong() {
-      const title = document.getElementById('song-title').innerText;
-      if (!likedSongs.includes(title)) {
-        likedSongs.push(title);
-        updateLikedList();
-        alert(`'${title}'을(를) 좋아요에 추가했어요!`);
+    function like() {
+      const videoId = "ZcQ88BYcS1E";
+      if (!likedVideos.includes(videoId)) {
+        likedVideos.push(videoId);
+        alert("좋아요를 눌렀습니다!");
       } else {
-        alert('이미 좋아요에 추가된 곡이에요!');
+        alert("이미 좋아요를 누른 영상입니다.");
       }
     }
 
-    function updateLikedList() {
-      const list = document.getElementById('likedList');
-      list.innerHTML = '';
-      likedSongs.forEach(song => {
-        const li = document.createElement('li');
-        li.textContent = song;
-        list.appendChild(li);
+    function showLikes() {
+      if (likedVideos.length === 0) {
+        alert("좋아요한 영상이 없습니다.");
+      } else {
+        alert("좋아요 목록:\n" + likedVideos.join("\n"));
+      }
+    }
+
+    function share() {
+      const url = `https://www.youtube.com/watch?v=ZcQ88BYcS1E`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert("영상 링크가 복사되었습니다!");
       });
-    }
-
-    function toggleLikedSongs() {
-      const box = document.getElementById('likedSongs');
-      box.style.display = box.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function shareSong() {
-      const title = document.getElementById('song-title').innerText;
-      const url = document.getElementById('miniFrame').src;
-      const shareText = `${title}\n${url}`;
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert('곡 정보가 클립보드에 복사되었어요!');
-      });
-    }
-
-    function getVideoId(url) {
-      const match = url.match(/embed\/([^?&]+)/);
-      return match ? match[1] : '';
     }
   </script>
 </body>
