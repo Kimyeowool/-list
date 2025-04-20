@@ -101,76 +101,85 @@
   <!-- 우측 하단 작게 축소된 메인 영상 -->
   <iframe id="video-frame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
-  <script>
-    const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
-    const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q';
+<!-- HTML 그대로 유지되고, 아래 자바스크립트 부분만 수정됨 -->
+<script>
+  const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
+  const playlistId = 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q';
 
-    let currentSong = {};
+  let currentSong = {};
 
-    async function getRandomSongFromPlaylist() {
-      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
+  async function getRandomSongFromPlaylist() {
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
 
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
 
-        if (data.items && data.items.length > 0) {
-          const randomIndex = Math.floor(Math.random() * data.items.length);
-          const randomSong = data.items[randomIndex];
-          const videoId = randomSong.snippet.resourceId.videoId;
-          const title = randomSong.snippet.title;
+      if (data.items && data.items.length > 0) {
+        const randomIndex = Math.floor(Math.random() * data.items.length);
+        const randomSong = data.items[randomIndex];
+        const videoId = randomSong.snippet.resourceId.videoId;
+        const title = randomSong.snippet.title;
 
-          currentSong = { videoId, title };
+        currentSong = { videoId, title };
 
-          document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
-          document.getElementById("video-frame").src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
+        const videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&mute=0`;
 
-          document.getElementById("background-video").innerHTML = `
-            <iframe
-              src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&modestbranding=1&playlist=${videoId}&rel=0"
-              frameborder="0"
-              allow="autoplay; encrypted-media"
-              allowfullscreen
-            ></iframe>
-          `;
+        const videoFrame = document.getElementById("video-frame");
+        videoFrame.src = videoUrl;
 
-          updateLikeButton();
-        } else {
-          alert("재생목록에 곡이 없습니다.");
-        }
-      } catch (error) {
-        console.error('곡을 불러오는 중 오류:', error);
-        alert("곡을 불러오는 중 오류가 발생했습니다.");
-      }
-    }
+        document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
 
-    document.getElementById("like-btn").addEventListener("click", () => {
-      let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
-      const exists = likedSongs.some(song => song.videoId === currentSong.videoId);
+        // 기존 배경 iframe 제거 후 복사본 추가
+        const background = document.getElementById("background-video");
+        background.innerHTML = ''; // 이전 내용 제거
 
-      if (exists) {
-        likedSongs = likedSongs.filter(song => song.videoId !== currentSong.videoId);
-        alert("좋아요가 취소되었습니다.");
+        const clone = videoFrame.cloneNode(); // 복사
+        clone.removeAttribute("id");
+        clone.muted = true; // 소리 제거
+        clone.setAttribute("controls", "0");
+        clone.style.pointerEvents = "none"; // 클릭 불가
+
+        background.appendChild(clone); // 복사본 삽입
+
+        updateLikeButton();
       } else {
-        likedSongs.push(currentSong);
-        alert("좋아요가 추가되었습니다.");
+        alert("재생목록에 곡이 없습니다.");
       }
+    } catch (error) {
+      console.error('곡을 불러오는 중 오류:', error);
+      alert("곡을 불러오는 중 오류가 발생했습니다.");
+    }
+  }
 
-      localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
-      updateLikeButton();
-    });
+  document.getElementById("like-btn").addEventListener("click", () => {
+    let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
+    const exists = likedSongs.some(song => song.videoId === currentSong.videoId);
 
-    function updateLikeButton() {
-      let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
-      const likeBtn = document.getElementById("like-btn");
-      const exists = likedSongs.some(song => song.videoId === currentSong.videoId);
-
-      likeBtn.classList.toggle("liked", exists);
+    if (exists) {
+      likedSongs = likedSongs.filter(song => song.videoId !== currentSong.videoId);
+      alert("좋아요가 취소되었습니다.");
+    } else {
+      likedSongs.push(currentSong);
+      alert("좋아요가 추가되었습니다.");
     }
 
-    document.getElementById("recommend-btn").addEventListener("click", getRandomSongFromPlaylist);
-    window.onload = getRandomSongFromPlaylist;
-  </script>
+    localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
+    updateLikeButton();
+  });
+
+  function updateLikeButton() {
+    let likedSongs = JSON.parse(localStorage.getItem("likedSongs") || "[]");
+    const likeBtn = document.getElementById("like-btn");
+    const exists = likedSongs.some(song => song.videoId === currentSong.videoId);
+
+    likeBtn.classList.toggle("liked", exists);
+  }
+
+  document.getElementById("recommend-btn").addEventListener("click", getRandomSongFromPlaylist);
+  window.onload = getRandomSongFromPlaylist;
+</script>
+
 
 </body>
 </html>
