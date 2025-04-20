@@ -12,7 +12,6 @@
       padding: 0;
       height: 100%;
       overflow: hidden;
-      background: black;
     }
 
     body {
@@ -22,35 +21,40 @@
       position: relative;
     }
 
-    #background-video {
+    .video-wrapper {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      pointer-events: none;
+      overflow: hidden;
       z-index: -1;
-      filter: blur(30px) brightness(0.5);
-      transform: scale(1.2);
     }
 
-    .mini-player {
+    .video-wrapper::before {
+      content: '';
+      position: absolute;
+      top: -20%;
+      left: -20%;
+      width: 140%;
+      height: 140%;
+      background: inherit;
+      filter: blur(20px);
+      transform: scale(1.1);
+      z-index: -1;
+    }
+
+    #video-frame {
       position: fixed;
       bottom: 20px;
       right: 20px;
       width: 300px;
       height: 170px;
-      z-index: 2;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      background-color: black;
-    }
-
-    .mini-player iframe {
-      width: 100%;
-      height: 100%;
       border: none;
+      z-index: 2;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      border-radius: 12px;
+      background-color: black;
     }
 
     .content {
@@ -84,12 +88,9 @@
 </head>
 <body>
 
-  <!-- 배경 영상 (음소거 + 자동반복) -->
-  <iframe id="background-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-
-  <!-- 미니 플레이어 (소리 있음) -->
-  <div class="mini-player">
-    <iframe id="main-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <!-- 하나의 영상 iframe만 사용 -->
+  <div class="video-wrapper" id="video-wrapper">
+    <iframe id="video-frame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
   </div>
 
   <div class="content">
@@ -108,7 +109,7 @@
     let currentSong = {};
 
     async function getRandomSongFromPlaylist() {
-      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
+      const url = https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey};
 
       try {
         const response = await fetch(url);
@@ -122,14 +123,13 @@
 
           currentSong = { videoId, title };
 
-          // 영상 URL 구성
-          const mainUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
-          const bgUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${videoId}`;
+          const videoUrl = https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1;
 
-          document.getElementById("main-video").src = mainUrl;
-          document.getElementById("background-video").src = bgUrl;
+          const videoFrame = document.getElementById("video-frame");
+          videoFrame.src = videoUrl;
 
-          document.getElementById("song-title").textContent = `오늘의 추천곡: ${title}`;
+          document.getElementById("song-title").textContent = 오늘의 추천곡: ${title};
+
           updateLikeButton();
         } else {
           alert("재생목록에 곡이 없습니다.");
