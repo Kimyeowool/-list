@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>오늘의 추천곡</title>
-  <link rel="icon" href="낙낙.png" type="image/png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: 'Arial', sans-serif;
-      background-color: #000;
+      font-family: Arial, sans-serif;
+      background-color: black;
       color: white;
       overflow: hidden;
     }
@@ -23,8 +22,8 @@
       width: 100vw;
       height: 100vh;
       z-index: -2;
-      object-fit: cover;
-      filter: blur(25px) brightness(0.4);
+      pointer-events: none;
+      filter: blur(25px) brightness(0.3);
     }
 
     .content {
@@ -37,28 +36,26 @@
 
     h1 {
       font-size: 2.5em;
-      margin-bottom: 0.5em;
     }
 
     #songTitle {
-      font-size: 1.1em;
-      margin-bottom: 1.5em;
+      margin: 10px 0 20px;
     }
 
     .button-group {
+      margin: 10px 0;
       display: flex;
       justify-content: center;
       gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 15px;
     }
 
     .btn {
-      background: white;
-      color: black;
       padding: 10px 16px;
       border: none;
       border-radius: 8px;
+      background: white;
+      color: black;
       font-size: 0.95em;
       cursor: pointer;
       transition: 0.2s ease;
@@ -74,23 +71,28 @@
       right: 20px;
       width: 200px;
       height: 200px;
+      z-index: 10;
       border-radius: 10px;
       overflow: hidden;
-      z-index: 10;
       box-shadow: 0 0 10px rgba(0,0,0,0.6);
     }
 
     iframe {
       width: 100%;
       height: 100%;
+      border: none;
     }
   </style>
 </head>
 <body>
   <!-- 백그라운드 영상 -->
-  <iframe id="background" class="background-video" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <iframe
+    id="background"
+    class="background-video"
+    allow="autoplay; encrypted-media"
+  ></iframe>
 
-  <!-- 중앙 컨텐츠 -->
+  <!-- 콘텐츠 -->
   <div class="content">
     <h1>Today's recommended song</h1>
     <div id="songTitle">장르를 선택해 주세요</div>
@@ -110,7 +112,10 @@
 
   <!-- 미니 유튜브 플레이어 -->
   <div id="miniPlayer">
-    <iframe id="miniVideo" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <iframe
+      id="miniVideo"
+      allow="autoplay; encrypted-media"
+    ></iframe>
   </div>
 
   <script>
@@ -121,31 +126,22 @@
       japan: 'PLu4x1UBAg4x8lyQztvvlOEBFAxC_F3TBU'
     };
 
+    function getSafeUrl(videoId, mute, controls = 0) {
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${mute ? 1 : 0}&controls=${controls}&loop=1&playlist=${videoId}&modestbranding=1&rel=0&origin=${location.origin}`;
+    }
+
     async function playGenre(genre) {
       const playlistId = playlists[genre];
-      const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`);
+      const data = await res.json();
+      const index = Math.floor(Math.random() * data.items.length);
+      const video = data.items[index];
+      const videoId = video.snippet.resourceId.videoId;
+      const title = video.snippet.title;
 
-      try {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-        const index = Math.floor(Math.random() * data.items.length);
-        const video = data.items[index];
-        const videoId = video.snippet.resourceId.videoId;
-        const title = video.snippet.title;
-
-        // 배경 영상: 소리 없음 + 자동재생
-        const backgroundUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}`;
-
-        // 미니플레이어: 소리 있음 + 조작 가능
-        const miniPlayerUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&loop=1&playlist=${videoId}`;
-
-        document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
-        document.getElementById('background').src = backgroundUrl;
-        document.getElementById('miniVideo').src = miniPlayerUrl;
-      } catch (e) {
-        alert("곡을 불러오는 중 오류가 발생했습니다.");
-        console.error(e);
-      }
+      document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
+      document.getElementById('background').src = getSafeUrl(videoId, true, 0);
+      document.getElementById('miniVideo').src = getSafeUrl(videoId, false, 1);
     }
   </script>
 </body>
