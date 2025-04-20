@@ -137,11 +137,14 @@
         const title = item.snippet.title;
 
         const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&loop=1&playlist=${videoId}`;
-        const embedMuted = embedUrl + '&mute=1';
+        const backgroundUrl = embedUrl + '&mute=1';
 
+        // 제목 업데이트
         document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
-        document.getElementById('background').src = embedMuted;
+
+        // 영상 삽입 (미니플레이어 & 백그라운드 동일한 영상)
         document.getElementById('miniVideo').src = embedUrl;
+        document.getElementById('background').src = backgroundUrl;
 
         currentSong = { title, videoId };
       } catch (e) {
