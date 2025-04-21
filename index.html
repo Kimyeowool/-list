@@ -10,26 +10,25 @@
       background-color: black;
     }
 
-    #background-video {
+    #background-wrapper {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
       z-index: -1;
-      pointer-events: none;
       overflow: hidden;
+      filter: blur(20px); /* 블러는 이 wrapper에 적용 */
     }
 
-    #background-video iframe {
+    #background-video {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 177.78vh; /* 16:9 비율로 세로 기준 크기 설정 */
+      width: 177.78vh; /* 16:9 기준 */
       height: 100vh;
       transform: translate(-50%, -50%);
-      object-fit: cover;
-      filter: blur(20px);
+      pointer-events: none;
     }
 
     #mini-player {
@@ -45,14 +44,16 @@
 </head>
 <body>
 
-  <!-- 배경 유튜브 -->
-  <div id="background-video"></div>
+  <!-- 블러 처리된 배경 컨테이너 -->
+  <div id="background-wrapper">
+    <div id="background-video"></div>
+  </div>
 
   <!-- 미니 플레이어 -->
   <div id="mini-player"></div>
 
   <script>
-    const videoId = 'dQw4w9WgXcQ'; // 여기에 유튜브 영상 ID 입력
+    const videoId = 'dQw4w9WgXcQ'; // 유튜브 영상 ID
 
     function createYouTubePlayer(containerId, videoId, options) {
       return new YT.Player(containerId, {
@@ -75,7 +76,6 @@
       });
     }
 
-    // YouTube API 로드
     function onYouTubeIframeAPIReady() {
       createYouTubePlayer('background-video', videoId, { mute: true, controls: false });
       createYouTubePlayer('mini-player', videoId, { mute: false, controls: true });
