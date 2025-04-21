@@ -5,13 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>추천 음악</title>
   <style>
-    /* 기본 스타일 초기화 */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: sans-serif;
       background: black;
@@ -19,20 +13,18 @@
       overflow: hidden;
     }
 
-    /* 배경 YouTube 영상 iframe */
     #bgVideo {
       position: fixed;
       top: 50%;
       left: 50%;
       width: 120vw;
-      height: 67.5vw; /* 16:9 비율 유지 */
+      height: 67.5vw;
       transform: translate(-50%, -50%);
-      z-index: -1; /* 콘텐츠보다 뒤로 */
-      pointer-events: none; /* 클릭 불가능하게 */
-      filter: blur(25px); /* 블러 효과 */
+      z-index: -1;
+      pointer-events: none;
+      filter: blur(25px);
     }
 
-    /* 콘텐츠 영역 */
     .content {
       position: relative;
       z-index: 1;
@@ -77,13 +69,42 @@
       height: 135px;
       z-index: 10;
       border-radius: 8px;
-      overflow: hidden;
+    }
+
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      color: black;
+      padding: 20px;
+      border-radius: 12px;
+      z-index: 100;
+      display: none;
+    }
+
+    .modal h2 {
+      margin-bottom: 10px;
+    }
+
+    .modal ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .modal li {
+      margin-bottom: 6px;
+    }
+
+    .modal button {
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
-  <!-- ✅ 블러 처리된 배경 유튜브 영상 -->
+  <!-- 배경 영상 -->
   <iframe
     id="bgVideo"
     src="https://www.youtube.com/embed/Acj_kh5TH-E?autoplay=1&mute=1&loop=1&playlist=Acj_kh5TH-E"
@@ -92,28 +113,29 @@
     allowfullscreen
   ></iframe>
 
-  <!-- ✅ 중앙 콘텐츠 -->
+  <!-- 콘텐츠 -->
   <div class="content">
     <h1>Today's recommended song</h1>
-    <p>오늘의 추천곡: <b>KAZINO</b> (사장님 도박은 재미로 하셔야 합니다)</p>
+    <p id="songTitle">오늘의 추천곡: <b>KAZINO</b> (사장님 도박은 재미로 하셔야 합니다)</p>
 
     <div class="genre-buttons">
-      <button>🎧 인디</button>
-      <button>✏️ 팝송</button>
-      <button>🇯🇵 일본</button>
-      <button>🍺 펑크</button>
+      <button onclick="playRandom('indie')">🎧 인디</button>
+      <button onclick="playRandom('pop')">✏️ 팝송</button>
+      <button onclick="playRandom('jpop')">🇯🇵 일본</button>
+      <button onclick="playRandom('punk')">🍺 펑크</button>
     </div>
 
     <div class="action-buttons">
-      <button>❤️ 좋아요</button>
-      <button>🧡 좋아요 목록</button>
-      <button>📄 최근 재생 목록</button>
-      <button>🔗 공유하기</button>
+      <button onclick="likeCurrent()">❤️ 좋아요</button>
+      <button onclick="showLikes()">🧡 좋아요 목록</button>
+      <button onclick="showRecent()">📄 최근 재생 목록</button>
+      <button onclick="copyShareLink()">🔗 공유하기</button>
     </div>
   </div>
 
-  <!-- ✅ 미니 유튜브 플레이어 (소리 나는 실재 플레이어) -->
+  <!-- 미니 플레이어 -->
   <iframe
+    id="miniPlayer"
     class="mini-player"
     src="https://www.youtube.com/embed/Acj_kh5TH-E?autoplay=1&mute=0&loop=1&playlist=Acj_kh5TH-E"
     frameborder="0"
@@ -121,5 +143,89 @@
     allowfullscreen
   ></iframe>
 
+  <!-- 모달 -->
+  <div id="modal" class="modal">
+    <h2 id="modalTitle">목록</h2>
+    <ul id="modalList"></ul>
+    <button onclick="closeModal()">닫기</button>
+  </div>
+
+  <script>
+    const genrePlaylists = {
+      indie: [
+        { id: "Acj_kh5TH-E", title: "KAZINO" },
+        { id: "y5R0eW3PkxM", title: "잔나비 - 주저하는 연인들을 위해" }
+      ],
+      pop: [
+        { id: "3JZ4pnNtyxQ", title: "Billie Eilish - bad guy" },
+        { id: "hT_nvWreIhg", title: "Imagine Dragons - Demons" }
+      ],
+      jpop: [
+        { id: "f1YjR7REkNU", title: "Aimer - Brave Shine" },
+        { id: "PbOjuwOaEyg", title: "YOASOBI - 夜に駆ける" }
+      ],
+      punk: [
+        { id: "JGwWNGJdvx8", title: "Green Day - Holiday" },
+        { id: "K5KAc5CoCuk", title: "My Chemical Romance - Helena" }
+      ]
+    };
+
+    let liked = [];
+    let recent = [];
+
+    function playRandom(genre) {
+      const songs = genrePlaylists[genre];
+      const song = songs[Math.floor(Math.random() * songs.length)];
+      const url = `https://www.youtube.com/embed/${song.id}?autoplay=1&mute=1&loop=1&playlist=${song.id}`;
+      const miniUrl = `https://www.youtube.com/embed/${song.id}?autoplay=1&mute=0&loop=1&playlist=${song.id}`;
+
+      document.getElementById("bgVideo").src = url;
+      document.getElementById("miniPlayer").src = miniUrl;
+      document.getElementById("songTitle").innerHTML = `오늘의 추천곡: <b>${song.title}</b>`;
+      recent.unshift(song);
+      if (recent.length > 10) recent.pop();
+    }
+
+    function likeCurrent() {
+      const title = document.getElementById("songTitle").textContent.replace("오늘의 추천곡: ", "").trim();
+      if (!liked.find(song => song.title === title)) {
+        liked.push({ title });
+        alert("좋아요에 추가되었습니다!");
+      } else {
+        alert("이미 좋아요에 추가된 곡입니다.");
+      }
+    }
+
+    function showLikes() {
+      openModal("좋아요 목록", liked.map(item => item.title));
+    }
+
+    function showRecent() {
+      openModal("최근 재생 목록", recent.map(item => item.title));
+    }
+
+    function copyShareLink() {
+      const videoUrl = document.getElementById("miniPlayer").src;
+      navigator.clipboard.writeText(videoUrl).then(() => {
+        alert("링크가 복사되었습니다!");
+      });
+    }
+
+    function openModal(title, items) {
+      document.getElementById("modalTitle").textContent = title;
+      const list = document.getElementById("modalList");
+      list.innerHTML = "";
+      items.forEach(text => {
+        const li = document.createElement("li");
+        li.textContent = text;
+        list.appendChild(li);
+      });
+      document.getElementById("modal").style.display = "block";
+    }
+
+    function closeModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+  </script>
 </body>
 </html>
