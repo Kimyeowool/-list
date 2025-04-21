@@ -27,14 +27,12 @@
       pointer-events: none;
     }
 
-    #bgVideo iframe {
+    #bgVideo {
       position: absolute;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: cover;
-      pointer-events: none;
       z-index: -2;
     }
 
@@ -177,7 +175,6 @@
       document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
       currentSong = { title, videoId, index };
 
-      // 최근 재생 추가
       recentSongs.unshift(currentSong);
       if (recentSongs.length > 10) recentSongs.pop();
 
@@ -188,7 +185,7 @@
       if (miniPlayer) miniPlayer.destroy();
       if (bgPlayer) bgPlayer.destroy();
 
-      // 배경 플레이어
+      // 배경 영상
       bgPlayer = new YT.Player('bgVideo', {
         videoId: videoId,
         playerVars: {
@@ -212,7 +209,7 @@
         videoId: videoId,
         playerVars: {
           autoplay: 1,
-          loop: 0, // 자동 다음 곡 위해 loop 제거
+          loop: 0,
           mute: 0,
           controls: 1,
           modestbranding: 1,
@@ -235,7 +232,6 @@
 
     function playNextSong() {
       if (!currentPlaylistItems || currentPlaylistItems.length === 0) return;
-
       const nextIndex = (currentSong.index + 1) % currentPlaylistItems.length;
       playSongByIndex(nextIndex);
     }
