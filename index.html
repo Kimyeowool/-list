@@ -18,12 +18,18 @@
       height: 100vh;
       z-index: -1;
       pointer-events: none;
+      overflow: hidden;
     }
 
     #background-video iframe {
-      width: 100vw;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 177.78vh; /* 16:9 비율로 세로 기준 크기 설정 */
       height: 100vh;
-      filter: blur(20px); /* 블러만 적용, 밝기 조절 없음 */
+      transform: translate(-50%, -50%);
+      object-fit: cover;
+      filter: blur(20px);
     }
 
     #mini-player {
@@ -46,7 +52,7 @@
   <div id="mini-player"></div>
 
   <script>
-    const videoId = 'dQw4w9WgXcQ'; // 여기에 원하는 유튜브 영상 ID 넣기
+    const videoId = 'dQw4w9WgXcQ'; // 여기에 유튜브 영상 ID 입력
 
     function createYouTubePlayer(containerId, videoId, options) {
       return new YT.Player(containerId, {
@@ -75,7 +81,7 @@
       createYouTubePlayer('mini-player', videoId, { mute: false, controls: true });
     }
 
-    // YouTube API 스크립트 로드
+    // YouTube API 스크립트 삽입
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     document.body.appendChild(tag);
