@@ -133,7 +133,7 @@
     </div>
 
     <div class="button-group">
-      <button class="btn" onclick="likeSong()">❤️ 좋아요</button>
+      <button class="btn" onclick="likeSong(this)">❤️ 좋아요</button>
       <button class="btn" onclick="showLikes()">🧡 좋아요 목록</button>
       <button class="btn" onclick="showRecentSongs()">📜 최근 재생 목록</button>
       <button class="btn" onclick="shareSong()">🔗 공유하기</button>
@@ -191,8 +191,8 @@
       const title = item.snippet.title;
 
       const titleEl = document.getElementById('songName');
-      titleEl.classList.remove('fade-in'); // 애니 초기화
-      void titleEl.offsetWidth; // 강제 리플로우
+      titleEl.classList.remove('fade-in');
+      void titleEl.offsetWidth;
       titleEl.innerText = title;
       titleEl.classList.add('fade-in');
 
@@ -257,12 +257,18 @@
       playSongByIndex(nextIndex);
     }
 
-    function likeSong() {
-      if (currentSong && !likedSongs.find(s => s.videoId === currentSong.videoId)) {
+    function likeSong(button) {
+      if (!currentSong) return;
+      const index = likedSongs.findIndex(s => s.videoId === currentSong.videoId);
+
+      if (index === -1) {
         likedSongs.push(currentSong);
+        button.innerText = '💔 좋아요 취소';
         alert(`'${currentSong.title}'을(를) 좋아요에 추가했습니다.`);
       } else {
-        alert('이미 좋아요를 누르셨거나 노래가 없습니다.');
+        likedSongs.splice(index, 1);
+        button.innerText = '❤️ 좋아요';
+        alert(`'${currentSong.title}'의 좋아요를 취소했습니다.`);
       }
     }
 
