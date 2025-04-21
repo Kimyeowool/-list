@@ -268,7 +268,8 @@
         likedSongs.push(currentSong);
         alert(`'${currentSong.title}'을(를) 좋아요에 추가했습니다.`);
       } else {
-        likedSongs.splice(index, 1); // 좋아요 취소
+        likedSongs.splice(index, 1);
+        alert(`'${currentSong.title}'의 좋아요를 취소했습니다.`);
       }
     }
 
