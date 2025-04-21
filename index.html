@@ -2,278 +2,79 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>오늘의 추천곡</title>
-  <link rel="icon" href="낙낙.png" type="image/png" />
+  <title>YouTube Video Background</title>
   <style>
-    body, html {
+    body {
       margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Arial', sans-serif;
-      background-color: #000;
-      color: white;
       overflow: hidden;
     }
 
-    .background-video {
+    #background-video {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: -2;
-      filter: blur(25px);
+      z-index: -1;
+      filter: blur(20px);
       pointer-events: none;
     }
 
-    #bgVideo {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: -2;
-    }
-
-    .content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 2.5em;
-      margin-bottom: 0.5em;
-    }
-
-    #songTitle {
-      font-size: 1.1em;
-      margin-bottom: 1.5em;
-    }
-
-    .button-group {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 15px;
-    }
-
-    .btn {
-      background: white;
-      color: black;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.95em;
-      cursor: pointer;
-      transition: 0.2s ease;
-    }
-
-    .btn:hover {
-      background: #eee;
-    }
-
-    #miniPlayer {
+    #mini-player {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 200px;
-      height: 200px;
-      border-radius: 10px;
-      overflow: hidden;
+      width: 320px;
+      height: 180px;
       z-index: 10;
-      box-shadow: 0 0 10px rgba(0,0,0,0.6);
-    }
-
-    #miniPlayer iframe {
-      width: 100%;
-      height: 100%;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
     }
   </style>
 </head>
 <body>
 
-  <!-- 배경 유튜브 영상 -->
-  <div class="background-video">
-    <div id="bgVideo"></div>
-  </div>
-
-  <!-- 중앙 콘텐츠 -->
-  <div class="content">
-    <h1>Today's recommended song</h1>
-    <div id="songTitle">장르를 선택해 주세요</div>
-
-    <div class="button-group">
-      <button class="btn" onclick="playGenre('indie')">🎧 인디</button>
-      <button class="btn" onclick="playGenre('pop')">✏️ 팝송</button>
-      <button class="btn" onclick="playGenre('japan')">🎌 일본</button>
-      <button class="btn" onclick="playGenre('punk')">🤘 펑크</button>
-    </div>
-
-    <div class="button-group">
-      <button class="btn" onclick="likeSong()">❤️ 좋아요</button>
-      <button class="btn" onclick="showLikes()">🧡 좋아요 목록</button>
-      <button class="btn" onclick="showRecentSongs()">📜 최근 재생 목록</button>
-      <button class="btn" onclick="shareSong()">🔗 공유하기</button>
-    </div>
-  </div>
+  <!-- 배경 유튜브 플레이어 (음소거, 자동 재생) -->
+  <div id="background-video"></div>
 
   <!-- 미니 유튜브 플레이어 -->
-  <div id="miniPlayer">
-    <div id="miniVideo"></div>
-  </div>
+  <div id="mini-player"></div>
 
-  <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    const playlists = {
-      indie: 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q',
-      pop: 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d',
-      japan: 'PLu4x1UBAg4x8lyQztvvlOEBFAxC_F3TBU',
-      punk: 'PLu4x1UBAg4x--fi_tBCFzNGDw7-sejAgp'
-    };
+    const videoId = 'dQw4w9WgXcQ'; // 여기에 네가 재생할 유튜브 영상 ID 넣기
 
-    const likedSongs = [];
-    const recentSongs = [];
-    let currentSong = null;
-    let currentGenre = null;
-    let miniPlayer = null;
-    let bgPlayer = null;
-    let currentPlaylistItems = [];
-
-    function onYouTubeIframeAPIReady() {
-      playGenre('indie');
-    }
-
-    async function playGenre(genre) {
-      currentGenre = genre;
-      const playlistId = playlists[genre];
-      const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
-      const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
-
-      try {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-        currentPlaylistItems = data.items;
-
-        const randomIndex = Math.floor(Math.random() * currentPlaylistItems.length);
-        playSongByIndex(randomIndex);
-      } catch (e) {
-        alert("곡을 불러오는 중 오류가 발생했습니다.");
-        console.error(e);
-      }
-    }
-
-    function playSongByIndex(index) {
-      const item = currentPlaylistItems[index % currentPlaylistItems.length];
-      const videoId = item.snippet.resourceId.videoId;
-      const title = item.snippet.title;
-
-      document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
-      currentSong = { title, videoId, index };
-
-      recentSongs.unshift(currentSong);
-      if (recentSongs.length > 10) recentSongs.pop();
-
-      loadVideoPlayers(videoId);
-    }
-
-    function loadVideoPlayers(videoId) {
-      if (miniPlayer) miniPlayer.destroy();
-      if (bgPlayer) bgPlayer.destroy();
-
-      // 배경 영상
-      bgPlayer = new YT.Player('bgVideo', {
+    function createYouTubePlayer(containerId, videoId, options) {
+      return new YT.Player(containerId, {
         videoId: videoId,
         playerVars: {
           autoplay: 1,
+          mute: options.mute ? 1 : 0,
+          controls: options.controls ? 1 : 0,
           loop: 1,
-          mute: 1,
           playlist: videoId,
-          controls: 0,
-          showinfo: 0,
           modestbranding: 1,
           rel: 0,
-          playsinline: 1
         },
         events: {
-          onReady: (e) => e.target.playVideo()
-        }
-      });
-
-      // 미니 플레이어
-      miniPlayer = new YT.Player('miniVideo', {
-        videoId: videoId,
-        playerVars: {
-          autoplay: 1,
-          loop: 0,
-          mute: 0,
-          controls: 1,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1
-        },
-        events: {
-          onReady: (e) => {
-            e.target.unMute();
-            e.target.playVideo();
-          },
-          onStateChange: (e) => {
-            if (e.data === YT.PlayerState.ENDED) {
-              playNextSong();
+          onReady: (event) => {
+            if (options.mute) {
+              event.target.mute();
             }
+            event.target.playVideo();
           }
         }
       });
     }
 
-    function playNextSong() {
-      if (!currentPlaylistItems || currentPlaylistItems.length === 0) return;
-      const nextIndex = (currentSong.index + 1) % currentPlaylistItems.length;
-      playSongByIndex(nextIndex);
+    // YouTube API 로드
+    function onYouTubeIframeAPIReady() {
+      createYouTubePlayer('background-video', videoId, { mute: true, controls: false });
+      createYouTubePlayer('mini-player', videoId, { mute: false, controls: true });
     }
 
-    function likeSong() {
-      if (currentSong && !likedSongs.find(s => s.videoId === currentSong.videoId)) {
-        likedSongs.push(currentSong);
-        alert(`'${currentSong.title}'을(를) 좋아요에 추가했습니다.`);
-      } else {
-        alert('이미 좋아요를 누르셨거나 노래가 없습니다.');
-      }
-    }
-
-    function showLikes() {
-      if (likedSongs.length === 0) {
-        alert('아직 좋아요한 곡이 없습니다.');
-      } else {
-        const list = likedSongs.map(song => `🎵 ${song.title}`).join('\n');
-        alert('❤️ 좋아요 목록:\n\n' + list);
-      }
-    }
-
-    function showRecentSongs() {
-      if (recentSongs.length === 0) {
-        alert('최근 재생한 곡이 없습니다.');
-      } else {
-        const list = recentSongs.map(song => `🎵 ${song.title}`).join('\n');
-        alert('📜 최근 재생 목록:\n\n' + list);
-      }
-    }
-
-    function shareSong() {
-      if (!currentSong) {
-        alert('먼저 노래를 재생해주세요.');
-        return;
-      }
-
-      const shareUrl = `https://www.youtube.com/watch?v=${currentSong.videoId}`;
-      navigator.clipboard.writeText(shareUrl)
-        .then(() => alert('공유 링크가 클립보드에 복사되었습니다!'))
-        .catch(() => alert('링크 복사에 실패했습니다.'));
-    }
+    // YouTube API 스크립트 동적 추가
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
   </script>
 </body>
 </html>
