@@ -119,6 +119,7 @@
     <div class="button-group">
       <button class="btn" onclick="likeSong()">❤️ 좋아요</button>
       <button class="btn" onclick="showLikes()">🧡 좋아요 목록</button>
+      <button class="btn" onclick="showRecentSongs()">📜 최근 재생 목록</button>
       <button class="btn" onclick="shareSong()">🔗 공유하기</button>
     </div>
   </div>
@@ -134,39 +135,53 @@
       indie: 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q',
       pop: 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d',
       japan: 'PLu4x1UBAg4x8lyQztvvlOEBFAxC_F3TBU',
-      punk: 'PLu4x1UBAg4x--fi_tBCFzNGDw7-sejAgp' // 여기에 당신의 펑크 재생목록 ID 입력!
+      punk: 'PLu4x1UBAg4x--fi_tBCFzNGDw7-sejAgp'
     };
 
     const likedSongs = [];
+    const recentSongs = [];
     let currentSong = null;
+    let currentGenre = null;
     let miniPlayer = null;
     let bgPlayer = null;
+    let currentPlaylistItems = [];
 
     function onYouTubeIframeAPIReady() {
       playGenre('indie');
     }
 
     async function playGenre(genre) {
+      currentGenre = genre;
       const playlistId = playlists[genre];
-      const index = Math.floor(Math.random() * 50);
       const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
       const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
 
       try {
         const res = await fetch(apiUrl);
         const data = await res.json();
-        const item = data.items[index % data.items.length];
-        const videoId = item.snippet.resourceId.videoId;
-        const title = item.snippet.title;
+        currentPlaylistItems = data.items;
 
-        document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
-        currentSong = { title, videoId };
-
-        loadVideoPlayers(videoId);
+        const randomIndex = Math.floor(Math.random() * currentPlaylistItems.length);
+        playSongByIndex(randomIndex);
       } catch (e) {
         alert("곡을 불러오는 중 오류가 발생했습니다.");
         console.error(e);
       }
+    }
+
+    function playSongByIndex(index) {
+      const item = currentPlaylistItems[index % currentPlaylistItems.length];
+      const videoId = item.snippet.resourceId.videoId;
+      const title = item.snippet.title;
+
+      document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
+      currentSong = { title, videoId, index };
+
+      // 최근 재생 추가
+      recentSongs.unshift(currentSong);
+      if (recentSongs.length > 10) recentSongs.pop();
+
+      loadVideoPlayers(videoId);
     }
 
     function loadVideoPlayers(videoId) {
@@ -197,9 +212,8 @@
         videoId: videoId,
         playerVars: {
           autoplay: 1,
-          loop: 1,
+          loop: 0, // 자동 다음 곡 위해 loop 제거
           mute: 0,
-          playlist: videoId,
           controls: 1,
           modestbranding: 1,
           rel: 0,
@@ -209,9 +223,21 @@
           onReady: (e) => {
             e.target.unMute();
             e.target.playVideo();
+          },
+          onStateChange: (e) => {
+            if (e.data === YT.PlayerState.ENDED) {
+              playNextSong();
+            }
           }
         }
       });
+    }
+
+    function playNextSong() {
+      if (!currentPlaylistItems || currentPlaylistItems.length === 0) return;
+
+      const nextIndex = (currentSong.index + 1) % currentPlaylistItems.length;
+      playSongByIndex(nextIndex);
     }
 
     function likeSong() {
@@ -229,6 +255,15 @@
       } else {
         const list = likedSongs.map(song => `🎵 ${song.title}`).join('\n');
         alert('❤️ 좋아요 목록:\n\n' + list);
+      }
+    }
+
+    function showRecentSongs() {
+      if (recentSongs.length === 0) {
+        alert('최근 재생한 곡이 없습니다.');
+      } else {
+        const list = recentSongs.map(song => `🎵 ${song.title}`).join('\n');
+        alert('📜 최근 재생 목록:\n\n' + list);
       }
     }
 
