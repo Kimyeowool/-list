@@ -2,11 +2,12 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>YouTube Video Background</title>
+  <title>음악 추천 배경</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
+      background-color: black;
     }
 
     #background-video {
@@ -16,8 +17,13 @@
       width: 100vw;
       height: 100vh;
       z-index: -1;
-      filter: blur(20px);
       pointer-events: none;
+    }
+
+    #background-video iframe {
+      width: 100vw;
+      height: 100vh;
+      filter: blur(20px); /* 블러만 적용, 밝기 조절 없음 */
     }
 
     #mini-player {
@@ -33,14 +39,14 @@
 </head>
 <body>
 
-  <!-- 배경 유튜브 플레이어 (음소거, 자동 재생) -->
+  <!-- 배경 유튜브 -->
   <div id="background-video"></div>
 
-  <!-- 미니 유튜브 플레이어 -->
+  <!-- 미니 플레이어 -->
   <div id="mini-player"></div>
 
   <script>
-    const videoId = 'dQw4w9WgXcQ'; // 여기에 네가 재생할 유튜브 영상 ID 넣기
+    const videoId = 'dQw4w9WgXcQ'; // 여기에 원하는 유튜브 영상 ID 넣기
 
     function createYouTubePlayer(containerId, videoId, options) {
       return new YT.Player(containerId, {
@@ -56,9 +62,7 @@
         },
         events: {
           onReady: (event) => {
-            if (options.mute) {
-              event.target.mute();
-            }
+            if (options.mute) event.target.mute();
             event.target.playVideo();
           }
         }
@@ -71,10 +75,11 @@
       createYouTubePlayer('mini-player', videoId, { mute: false, controls: true });
     }
 
-    // YouTube API 스크립트 동적 추가
+    // YouTube API 스크립트 로드
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     document.body.appendChild(tag);
   </script>
+
 </body>
 </html>
