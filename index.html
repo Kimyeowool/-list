@@ -55,6 +55,22 @@
       margin-bottom: 1.5em;
     }
 
+    /* 👇 페이드 인 애니메이션 효과 */
+    @keyframes fadeInText {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #songTitle.fade-in {
+      animation: fadeInText 0.8s ease-out;
+    }
+
     .button-group {
       display: flex;
       justify-content: center;
@@ -173,7 +189,12 @@
       const videoId = item.snippet.resourceId.videoId;
       const title = item.snippet.title;
 
-      document.getElementById('songTitle').innerText = `오늘의 추천곡: ${title}`;
+      const titleEl = document.getElementById('songTitle');
+      titleEl.classList.remove('fade-in'); // 애니메이션 초기화
+      void titleEl.offsetWidth; // 강제 리플로우
+      titleEl.innerText = `오늘의 추천곡: ${title}`;
+      titleEl.classList.add('fade-in');
+
       currentSong = { title, videoId, index };
 
       recentSongs.unshift(currentSong);
