@@ -24,7 +24,6 @@
       height: 100vh;
       overflow: hidden;
       filter: blur(25px);
-      z-index: 0;
     }
 
     #background-video {
@@ -35,21 +34,6 @@
       height: 100vh;
       transform: translate(-50%, -50%);
       pointer-events: none;
-    }
-
-    #messageBox {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      padding: 10px 20px;
-      border-radius: 10px;
-      max-width: 90vw;
-      z-index: 9999;
-      display: none;
-      white-space: pre-wrap;
-      font-size: 0.95em;
     }
 
     .content {
@@ -124,15 +108,45 @@
       width: 100%;
       height: 100%;
     }
+
+    #messageBox {
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      z-index: 100;
+      display: none;
+      white-space: pre-line;
+    }
+
+    @keyframes fadeSlideIn {
+      0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+      100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    @keyframes fadeSlideOut {
+      0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    }
+
+    #messageBox.show {
+      display: block;
+      animation: fadeSlideIn 0.4s ease-out forwards;
+    }
+
+    #messageBox.hide {
+      animation: fadeSlideOut 0.4s ease-in forwards;
+    }
   </style>
 </head>
 <body>
-
   <div id="background-wrapper">
     <div id="background-video"></div>
   </div>
-
-  <div id="messageBox"></div>
 
   <div class="content">
     <h1>Today's recommended song</h1>
@@ -157,6 +171,8 @@
     <div id="miniVideo"></div>
   </div>
 
+  <div id="messageBox"></div>
+
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
     const playlists = {
@@ -168,22 +184,12 @@
 
     const likedSongs = [];
     const recentSongs = [];
+    const playedIndicesByGenre = {};
     let currentSong = null;
     let currentGenre = null;
     let miniPlayer = null;
     let bgPlayer = null;
     let currentPlaylistItems = [];
-    let playedVideoIds = new Set();
-
-    function showMessage(text) {
-      const box = document.getElementById('messageBox');
-      box.innerText = text;
-      box.style.display = 'block';
-      clearTimeout(box._timeout);
-      box._timeout = setTimeout(() => {
-        box.style.display = 'none';
-      }, 4000);
-    }
 
     function onYouTubeIframeAPIReady() {
       playGenre('indie');
@@ -191,7 +197,6 @@
 
     async function playGenre(genre) {
       currentGenre = genre;
-      playedVideoIds.clear();
       const playlistId = playlists[genre];
       const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
       const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
@@ -201,32 +206,22 @@
         const data = await res.json();
         currentPlaylistItems = data.items;
 
-        playRandomUniqueSong();
+        if (!playedIndicesByGenre[genre]) playedIndicesByGenre[genre] = [];
+        if (playedIndicesByGenre[genre].length === currentPlaylistItems.length) {
+          playedIndicesByGenre[genre] = [];
+        }
+
+        let index;
+        do {
+          index = Math.floor(Math.random() * currentPlaylistItems.length);
+        } while (playedIndicesByGenre[genre].includes(index));
+
+        playedIndicesByGenre[genre].push(index);
+        playSongByIndex(index);
       } catch (e) {
         showMessage("곡을 불러오는 중 오류가 발생했습니다.");
         console.error(e);
       }
-    }
-
-    function playRandomUniqueSong() {
-      if (playedVideoIds.size >= currentPlaylistItems.length) {
-        playedVideoIds.clear();
-      }
-
-      let candidate = null;
-      let attempts = 0;
-      while (attempts < 100) {
-        const idx = Math.floor(Math.random() * currentPlaylistItems.length);
-        const id = currentPlaylistItems[idx].snippet.resourceId.videoId;
-        if (!playedVideoIds.has(id)) {
-          candidate = idx;
-          playedVideoIds.add(id);
-          break;
-        }
-        attempts++;
-      }
-
-      playSongByIndex(candidate ?? 0);
     }
 
     function playSongByIndex(index) {
@@ -234,8 +229,8 @@
       const videoId = item.snippet.resourceId.videoId;
       const title = item.snippet.title;
 
-      document.getElementById('songTitle').innerHTML =
-        `오늘의 추천곡 : <span style="animation-delay: 0.1s">${title}</span>`;
+      const titleElem = document.getElementById('songTitle');
+      titleElem.innerHTML = `오늘의 추천곡 : <span style="animation-delay: 0.1s">${title}</span>`;
 
       currentSong = { title, videoId, index };
 
@@ -251,44 +246,40 @@
 
       miniPlayer = new YT.Player('miniVideo', {
         videoId: videoId,
-        playerVars: {
-          autoplay: 1,
-          loop: 0,
-          mute: 0,
-          controls: 1,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1
-        },
+        playerVars: { autoplay: 1, loop: 0, mute: 0, controls: 1, modestbranding: 1, rel: 0, playsinline: 1 },
         events: {
-          onReady: (e) => {
-            e.target.unMute();
-            e.target.playVideo();
-          },
-          onStateChange: (e) => {
-            if (e.data === YT.PlayerState.ENDED) {
-              playRandomUniqueSong();
-            }
-          }
+          onReady: (e) => { e.target.unMute(); e.target.playVideo(); },
+          onStateChange: (e) => { if (e.data === YT.PlayerState.ENDED) playNextSong(); }
         }
       });
 
-      bgPlayer = new YT.Player('background-video', {
-        videoId: videoId,
-        playerVars: {
-          autoplay: 1,
-          loop: 1,
-          mute: 1,
-          playlist: videoId,
-          controls: 0,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1
-        },
-        events: {
-          onReady: (e) => e.target.playVideo()
-        }
-      });
+      const searchQuery = currentSong.title + ' MV';
+      fetchBackgroundVideoBySearch(searchQuery);
+    }
+
+    async function fetchBackgroundVideoBySearch(query) {
+      const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
+      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(query)}&key=${apiKey}`;
+
+      try {
+        const res = await fetch(searchUrl);
+        const data = await res.json();
+        const videoId = data.items[0]?.id?.videoId;
+
+        if (!videoId) return;
+
+        bgPlayer = new YT.Player('background-video', {
+          videoId: videoId,
+          playerVars: { autoplay: 1, loop: 1, mute: 1, playlist: videoId, controls: 0, modestbranding: 1, rel: 0, playsinline: 1 },
+          events: { onReady: (e) => e.target.playVideo() }
+        });
+      } catch (error) {
+        console.error("배경 영상 검색 실패:", error);
+      }
+    }
+
+    function playNextSong() {
+      playGenre(currentGenre);
     }
 
     function likeSong() {
@@ -296,16 +287,16 @@
       const idx = likedSongs.findIndex(s => s.videoId === currentSong.videoId);
       if (idx >= 0) {
         likedSongs.splice(idx, 1);
-        showMessage(`'${currentSong.title}' 좋아요 취소됨`);
+        showMessage(`'${currentSong.title}' 좋아요 취소되었습니다.`);
       } else {
         likedSongs.push(currentSong);
-        showMessage(`'${currentSong.title}' 좋아요에 추가됨`);
+        showMessage(`'${currentSong.title}'을(를) 좋아요에 추가했습니다.`);
       }
     }
 
     function showLikes() {
       if (likedSongs.length === 0) {
-        showMessage('❤️ 좋아요한 곡이 없습니다.');
+        showMessage('아직 좋아요한 곡이 없습니다.');
       } else {
         const list = likedSongs.map(song => `🎵 ${song.title}`).join('\n');
         showMessage('❤️ 좋아요 목록:\n\n' + list);
@@ -314,7 +305,7 @@
 
     function showRecentSongs() {
       if (recentSongs.length === 0) {
-        showMessage('📜 최근 재생한 곡이 없습니다.');
+        showMessage('최근 재생한 곡이 없습니다.');
       } else {
         const list = recentSongs.map(song => `🎵 ${song.title}`).join('\n');
         showMessage('📜 최근 재생 목록:\n\n' + list);
@@ -322,14 +313,24 @@
     }
 
     function shareSong() {
-      if (!currentSong) {
-        showMessage('먼저 노래를 재생해주세요.');
-        return;
-      }
+      if (!currentSong) return showMessage('먼저 노래를 재생해주세요.');
       const shareUrl = `https://www.youtube.com/watch?v=${currentSong.videoId}`;
       navigator.clipboard.writeText(shareUrl)
         .then(() => showMessage('공유 링크가 클립보드에 복사되었습니다!'))
         .catch(() => showMessage('링크 복사에 실패했습니다.'));
+    }
+
+    function showMessage(text) {
+      const box = document.getElementById('messageBox');
+      box.innerText = text;
+      box.classList.remove('hide');
+      box.classList.add('show');
+      clearTimeout(box._timeout);
+      box._timeout = setTimeout(() => {
+        box.classList.remove('show');
+        box.classList.add('hide');
+        setTimeout(() => { box.style.display = 'none'; }, 400);
+      }, 4000);
     }
   </script>
 </body>
