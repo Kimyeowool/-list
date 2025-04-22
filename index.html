@@ -155,6 +155,7 @@
     let miniPlayer = null;
     let bgPlayer = null;
     let currentPlaylistItems = [];
+    let playedVideoIds = [];
 
     function onYouTubeIframeAPIReady() {
       playGenre('indie');
@@ -162,6 +163,7 @@
 
     async function playGenre(genre) {
       currentGenre = genre;
+      playedVideoIds = [];
       const playlistId = playlists[genre];
       const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
       const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
@@ -170,27 +172,38 @@
         const res = await fetch(apiUrl);
         const data = await res.json();
         currentPlaylistItems = data.items;
-
-        const randomIndex = Math.floor(Math.random() * currentPlaylistItems.length);
-        playSongByIndex(randomIndex);
+        playNextUniqueSong();
       } catch (e) {
         alert("곡을 불러오는 중 오류가 발생했습니다.");
         console.error(e);
       }
     }
 
-    function playSongByIndex(index) {
-      const item = currentPlaylistItems[index % currentPlaylistItems.length];
-      const videoId = item.snippet.resourceId.videoId;
-      const title = item.snippet.title;
+    function playNextUniqueSong() {
+      const unplayedItems = currentPlaylistItems.filter(item => {
+        const videoId = item.snippet.resourceId.videoId;
+        return !playedVideoIds.includes(videoId);
+      });
 
-      const titleElem = document.getElementById('songTitle');
-      titleElem.innerHTML = `오늘의 추천곡 : <span style="animation-delay: 0.1s">${title}</span>`;
+      if (unplayedItems.length === 0) {
+        playedVideoIds = [];
+        alert("모든 곡을 다 들었어요! 다시 추천을 시작합니다.");
+        playNextUniqueSong();
+        return;
+      }
+
+      const randomItem = unplayedItems[Math.floor(Math.random() * unplayedItems.length)];
+      const videoId = randomItem.snippet.resourceId.videoId;
+      const title = randomItem.snippet.title;
+      const index = currentPlaylistItems.findIndex(i => i.snippet.resourceId.videoId === videoId);
 
       currentSong = { title, videoId, index };
-
+      playedVideoIds.push(videoId);
       recentSongs.unshift(currentSong);
       if (recentSongs.length > 10) recentSongs.pop();
+
+      document.getElementById('songTitle').innerHTML =
+        `오늘의 추천곡 : <span style="animation-delay: 0.1s">${title}</span>`;
 
       loadVideoPlayers(videoId);
     }
@@ -211,20 +224,19 @@
           playsinline: 1
         },
         events: {
-          onReady: (e) => {
+          onReady: e => {
             e.target.unMute();
             e.target.playVideo();
           },
-          onStateChange: (e) => {
+          onStateChange: e => {
             if (e.data === YT.PlayerState.ENDED) {
-              playNextSong();
+              playNextUniqueSong();
             }
           }
         }
       });
 
-      const searchQuery = currentSong.title + ' MV';
-      fetchBackgroundVideoBySearch(searchQuery);
+      fetchBackgroundVideoBySearch(currentSong.title + ' MV');
     }
 
     async function fetchBackgroundVideoBySearch(query) {
@@ -235,38 +247,27 @@
         const res = await fetch(searchUrl);
         const data = await res.json();
         const videoId = data.items[0]?.id?.videoId;
-
-        if (!videoId) {
-          console.warn("검색 결과 없음. 배경영상 생략.");
-          return;
-        }
+        if (!videoId) return;
 
         bgPlayer = new YT.Player('background-video', {
-          videoId: videoId,
+          videoId,
           playerVars: {
             autoplay: 1,
             loop: 1,
             mute: 1,
-            playlist: videoId,
             controls: 0,
-            showinfo: 0,
             modestbranding: 1,
             rel: 0,
-            playsinline: 1
+            playsinline: 1,
+            playlist: videoId
           },
           events: {
-            onReady: (e) => e.target.playVideo()
+            onReady: e => e.target.playVideo()
           }
         });
-      } catch (error) {
-        console.error("배경 영상 검색 실패:", error);
+      } catch (e) {
+        console.error("배경 영상 불러오기 실패:", e);
       }
-    }
-
-    function playNextSong() {
-      if (!currentPlaylistItems || currentPlaylistItems.length === 0) return;
-      const nextIndex = (currentSong.index + 1) % currentPlaylistItems.length;
-      playSongByIndex(nextIndex);
     }
 
     function likeSong() {
