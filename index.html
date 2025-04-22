@@ -6,6 +6,7 @@
   <title>오늘의 추천곡</title>
   <link rel="icon" href="낙낙.png" type="image/png" />
   <style>
+    /* (생략 없이 전체 스타일 그대로 포함) */
     body, html {
       margin: 0;
       padding: 0;
@@ -134,8 +135,13 @@
       100% { opacity: 0; transform: translateY(20px); }
     }
 
-    .fade-in { animation: fadeInUp 0.4s ease forwards; }
-    .fade-out { animation: fadeOutDown 0.4s ease forwards; }
+    .fade-in {
+      animation: fadeInUp 0.4s ease forwards;
+    }
+
+    .fade-out {
+      animation: fadeOutDown 0.4s ease forwards;
+    }
   </style>
 </head>
 <body>
@@ -214,7 +220,7 @@
     }
 
     function onYouTubeIframeAPIReady() {
-      // 초기 실행 X
+      playGenre('indie');
     }
 
     async function playGenre(genre) {
@@ -264,10 +270,10 @@
       const titleBox = document.getElementById('songTitle');
       titleBox.innerHTML = `오늘의 추천곡 : <span>${title}</span>`;
 
-      loadVideoPlayers(videoId);
+      loadVideoPlayers(videoId, title);
     }
 
-    function loadVideoPlayers(videoId) {
+    function loadVideoPlayers(videoId, title) {
       if (miniPlayer) miniPlayer.destroy();
       if (bgPlayer) bgPlayer.destroy();
 
@@ -293,23 +299,37 @@
         }
       });
 
-      bgPlayer = new YT.Player('background-video', {
-        videoId,
-        playerVars: {
-          autoplay: 1,
-          loop: 1,
-          mute: 1,
-          playlist: videoId,
-          controls: 0,
-          showinfo: 0,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1
-        },
-        events: {
-          onReady: (e) => e.target.playVideo()
-        }
-      });
+      const searchQuery = encodeURIComponent(`${title} MV`);
+      const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
+      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${searchQuery}&key=${apiKey}`;
+
+      fetch(searchUrl)
+        .then(res => res.json())
+        .then(data => {
+          const mvId = data.items?.[0]?.id?.videoId;
+          if (mvId) {
+            bgPlayer = new YT.Player('background-video', {
+              videoId: mvId,
+              playerVars: {
+                autoplay: 1,
+                loop: 1,
+                mute: 1,
+                playlist: mvId,
+                controls: 0,
+                showinfo: 0,
+                modestbranding: 1,
+                rel: 0,
+                playsinline: 1
+              },
+              events: {
+                onReady: (e) => e.target.playVideo()
+              }
+            });
+          }
+        })
+        .catch(err => {
+          console.error("배경 MV 검색 실패:", err);
+        });
     }
 
     function likeSong() {
@@ -317,10 +337,10 @@
       const idx = likedSongs.findIndex(s => s.videoId === currentSong.videoId);
       if (idx >= 0) {
         likedSongs.splice(idx, 1);
-        showMessage(`'${currentSong.title}' 좋아요 취소`);
+        showMessage(`${currentSong.title} 좋아요 취소`);
       } else {
         likedSongs.push(currentSong);
-        showMessage(`'${currentSong.title}' 좋아요 추가`);
+        showMessage(`${currentSong.title} 좋아요 추가`);
       }
     }
 
