@@ -125,34 +125,17 @@
     }
 
     @keyframes fadeInUp {
-      0% {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes fadeOutDown {
-      0% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      100% {
-        opacity: 0;
-        transform: translateY(20px);
-      }
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(20px); }
     }
 
-    .fade-in {
-      animation: fadeInUp 0.4s ease forwards;
-    }
-
-    .fade-out {
-      animation: fadeOutDown 0.4s ease forwards;
-    }
+    .fade-in { animation: fadeInUp 0.4s ease forwards; }
+    .fade-out { animation: fadeOutDown 0.4s ease forwards; }
   </style>
 </head>
 <body>
@@ -187,9 +170,104 @@
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    // ... 기존 변수들은 그대로 유지 ...
+    const playlists = {
+      indie: 'PLu4x1UBAg4x-3KehjcCtooRennNoUW66q',
+      pop: 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d',
+      japan: 'PLu4x1UBAg4x8lyQztvvlOEBFAxC_F3TBU',
+      punk: 'PLu4x1UBAg4x--fi_tBCFzNGDw7-sejAgp'
+    };
 
-    function loadVideoPlayers(videoId, title) {
+    const likedSongs = [];
+    const recentSongs = [];
+    const playedSongsPerGenre = {
+      indie: new Set(),
+      pop: new Set(),
+      japan: new Set(),
+      punk: new Set()
+    };
+
+    let currentSong = null;
+    let currentGenre = null;
+    let miniPlayer = null;
+    let bgPlayer = null;
+    let currentPlaylistItems = [];
+
+    function showMessage(content) {
+      const box = document.getElementById("messageBox");
+      box.style.display = "block";
+      box.classList.remove("fade-in", "fade-out");
+      void box.offsetWidth;
+
+      box.innerHTML = typeof content === "string" ? content : '';
+      if (typeof content !== "string") box.appendChild(content);
+      box.classList.add("fade-in");
+
+      clearTimeout(box.fadeOutTimer);
+      clearTimeout(box.fadeOutEndTimer);
+      box.fadeOutTimer = setTimeout(() => {
+        box.classList.remove("fade-in");
+        box.classList.add("fade-out");
+        box.fadeOutEndTimer = setTimeout(() => {
+          box.style.display = "none";
+        }, 400);
+      }, 5000);
+    }
+
+    function onYouTubeIframeAPIReady() {
+      // 초기 실행 X
+    }
+
+    async function playGenre(genre) {
+      currentGenre = genre;
+      const playlistId = playlists[genre];
+      const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
+      const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
+
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        currentPlaylistItems = data.items;
+
+        const unplayed = currentPlaylistItems.filter(item =>
+          !playedSongsPerGenre[genre].has(item.snippet.resourceId.videoId)
+        );
+
+        if (unplayed.length === 0) {
+          playedSongsPerGenre[genre].clear();
+          showMessage("모든 곡을 한 번씩 재생했어요. 목록을 초기화합니다.");
+          playGenre(genre);
+          return;
+        }
+
+        const randomItem = unplayed[Math.floor(Math.random() * unplayed.length)];
+        const index = currentPlaylistItems.findIndex(i =>
+          i.snippet.resourceId.videoId === randomItem.snippet.resourceId.videoId
+        );
+        playSongByIndex(index);
+      } catch (e) {
+        showMessage("곡을 불러오는 중 오류가 발생했습니다.");
+        console.error(e);
+      }
+    }
+
+    function playSongByIndex(index) {
+      const item = currentPlaylistItems[index];
+      const videoId = item.snippet.resourceId.videoId;
+      const title = item.snippet.title;
+
+      playedSongsPerGenre[currentGenre].add(videoId);
+
+      currentSong = { title, videoId, index };
+      recentSongs.unshift(currentSong);
+      if (recentSongs.length > 15) recentSongs.pop();
+
+      const titleBox = document.getElementById('songTitle');
+      titleBox.innerHTML = `오늘의 추천곡 : <span>${title}</span>`;
+
+      loadVideoPlayers(videoId);
+    }
+
+    function loadVideoPlayers(videoId) {
       if (miniPlayer) miniPlayer.destroy();
       if (bgPlayer) bgPlayer.destroy();
 
@@ -215,32 +293,74 @@
         }
       });
 
-      // 배경: MV 키워드 포함 검색 URL로 iframe 삽입
-      const bgVideoDiv = document.getElementById('background-video');
-      const searchQuery = encodeURIComponent(title + ' MV');
-      bgVideoDiv.innerHTML = `
-        <iframe width="100%" height="100%" 
-          src="https://www.youtube.com/embed?listType=search&list=${searchQuery}&autoplay=1&mute=1&loop=1&controls=0&modestbranding=1&rel=0&playsinline=1"
-          frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
-        </iframe>`;
+      bgPlayer = new YT.Player('background-video', {
+        videoId,
+        playerVars: {
+          autoplay: 1,
+          loop: 1,
+          mute: 1,
+          playlist: videoId,
+          controls: 0,
+          showinfo: 0,
+          modestbranding: 1,
+          rel: 0,
+          playsinline: 1
+        },
+        events: {
+          onReady: (e) => e.target.playVideo()
+        }
+      });
     }
 
-    // playSongByIndex 내부에서 loadVideoPlayers 호출 시 제목도 같이 넘기기
-    function playSongByIndex(index) {
-      const item = currentPlaylistItems[index];
-      const videoId = item.snippet.resourceId.videoId;
-      const title = item.snippet.title;
+    function likeSong() {
+      if (!currentSong) return;
+      const idx = likedSongs.findIndex(s => s.videoId === currentSong.videoId);
+      if (idx >= 0) {
+        likedSongs.splice(idx, 1);
+        showMessage(`'${currentSong.title}' 좋아요 취소`);
+      } else {
+        likedSongs.push(currentSong);
+        showMessage(`'${currentSong.title}' 좋아요 추가`);
+      }
+    }
 
-      playedSongsPerGenre[currentGenre].add(videoId);
+    function showLikes() {
+      if (likedSongs.length === 0) {
+        showMessage('아직 좋아요한 곡이 없습니다.');
+      } else {
+        const list = document.createElement('ul');
+        likedSongs.forEach(song => {
+          const li = document.createElement('li');
+          li.textContent = `🎵 ${song.title}`;
+          list.appendChild(li);
+        });
+        showMessage(list);
+      }
+    }
 
-      currentSong = { title, videoId, index };
-      recentSongs.unshift(currentSong);
-      if (recentSongs.length > 15) recentSongs.pop();
+    function showRecentSongs() {
+      if (recentSongs.length === 0) {
+        showMessage('최근 재생한 곡이 없습니다.');
+      } else {
+        const list = document.createElement('ul');
+        recentSongs.forEach(song => {
+          const li = document.createElement('li');
+          li.textContent = `🎵 ${song.title}`;
+          list.appendChild(li);
+        });
+        showMessage(list);
+      }
+    }
 
-      const titleBox = document.getElementById('songTitle');
-      titleBox.innerHTML = `오늘의 추천곡 : <span>${title}</span>`;
-
-      loadVideoPlayers(videoId, title);
+    function shareSong() {
+      if (!currentSong) {
+        showMessage('먼저 노래를 재생해주세요.');
+        return;
+      }
+      const url = `https://www.youtube.com/watch?v=${currentSong.videoId}`;
+      navigator.clipboard.writeText(url)
+        .then(() => showMessage('공유 링크가 복사되었습니다!'))
+        .catch(() => showMessage('링크 복사 실패'));
     }
   </script>
 </body>
