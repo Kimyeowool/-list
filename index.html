@@ -108,21 +108,6 @@
       width: 100%;
       height: 100%;
     }
-
-    #lyricsBox {
-      display: none;
-      position: fixed;
-      bottom: 240px;
-      right: 20px;
-      width: 300px;
-      max-height: 300px;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 15px;
-      border-radius: 10px;
-      overflow-y: auto;
-      z-index: 11;
-    }
   </style>
 </head>
 <body>
@@ -147,15 +132,12 @@
       <button class="btn" onclick="showLikes()">🧡 좋아요 목록</button>
       <button class="btn" onclick="showRecentSongs()">📜 최근 재생 목록</button>
       <button class="btn" onclick="shareSong()">🔗 공유하기</button>
-      <button class="btn" onclick="toggleLyrics()">📄 가사 보기</button>
     </div>
   </div>
 
   <div id="miniPlayer">
     <div id="miniVideo"></div>
   </div>
-
-  <div id="lyricsBox">가사를 불러오는 중...</div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
@@ -164,13 +146,6 @@
       pop: 'PLu4x1UBAg4x_iktia7qLOURp1fOsSOz7d',
       japan: 'PLu4x1UBAg4x8lyQztvvlOEBFAxC_F3TBU',
       punk: 'PLu4x1UBAg4x--fi_tBCFzNGDw7-sejAgp'
-    };
-
-    const lyricsMock = {
-      "indie": "이건 인디 노래의 예시 가사입니다.\n두 번째 줄\n세 번째 줄",
-      "pop": "팝송 예시 가사입니다.\n라인 2\n라인 3",
-      "japan": "일본 노래 예시 가사\n第二行\n第三行",
-      "punk": "펑크 예시 가사\n두 번째 줄\n세 번째 줄"
     };
 
     const likedSongs = [];
@@ -218,7 +193,6 @@
       if (recentSongs.length > 10) recentSongs.pop();
 
       loadVideoPlayers(videoId);
-      updateLyrics();
     }
 
     function loadVideoPlayers(videoId) {
@@ -334,16 +308,6 @@
       navigator.clipboard.writeText(shareUrl)
         .then(() => alert('공유 링크가 클립보드에 복사되었습니다!'))
         .catch(() => alert('링크 복사에 실패했습니다.'));
-    }
-
-    function toggleLyrics() {
-      const box = document.getElementById('lyricsBox');
-      box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    }
-
-    function updateLyrics() {
-      const lyricsBox = document.getElementById('lyricsBox');
-      lyricsBox.innerText = lyricsMock[currentGenre] || '가사를 찾을 수 없습니다.';
     }
   </script>
 </body>
