@@ -53,6 +53,13 @@
     #songTitle {
       font-size: 1.1em;
       margin-bottom: 1.5em;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.4s ease forwards;
     }
 
     .button-group {
@@ -107,7 +114,6 @@
       max-width: 300px;
       display: none;
       z-index: 999;
-      animation-duration: 0.4s;
       text-align: left;
       pointer-events: none;
     }
@@ -118,22 +124,22 @@
     }
 
     @keyframes fadeInUp {
-      from {
+      0% {
         opacity: 0;
         transform: translateY(20px);
       }
-      to {
+      100% {
         opacity: 1;
         transform: translateY(0);
       }
     }
 
     @keyframes fadeOutDown {
-      from {
+      0% {
         opacity: 1;
         transform: translateY(0);
       }
-      to {
+      100% {
         opacity: 0;
         transform: translateY(20px);
       }
@@ -206,10 +212,9 @@
     function showMessage(content) {
       const box = document.getElementById("messageBox");
 
-      // 타이머 및 애니메이션 초기화
-      clearTimeout(box.fadeOutTimer);
-      clearTimeout(box.fadeOutEndTimer);
-      box.style.animation = 'none';
+      // 애니메이션 초기화
+      box.style.display = "block";
+      box.classList.remove("fade-in", "fade-out");
       void box.offsetWidth;
 
       if (typeof content === "string") {
@@ -219,11 +224,10 @@
         box.appendChild(content);
       }
 
-      box.style.display = "block";
-      box.classList.remove("fade-in", "fade-out");
-      void box.offsetWidth;
       box.classList.add("fade-in");
 
+      clearTimeout(box.fadeOutTimer);
+      clearTimeout(box.fadeOutEndTimer);
       box.fadeOutTimer = setTimeout(() => {
         box.classList.remove("fade-in");
         box.classList.add("fade-out");
@@ -281,7 +285,12 @@
       recentSongs.unshift(currentSong);
       if (recentSongs.length > 15) recentSongs.pop();
 
-      document.getElementById('songTitle').innerHTML = `오늘의 추천곡 : <span>${title}</span>`;
+      const titleBox = document.getElementById('songTitle');
+      titleBox.classList.remove("fade-up");
+      void titleBox.offsetWidth;
+      titleBox.innerHTML = `오늘의 추천곡 : <span>${title}</span>`;
+      titleBox.classList.add("fade-up");
+
       loadVideoPlayers(videoId);
     }
 
