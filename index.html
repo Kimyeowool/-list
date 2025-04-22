@@ -6,7 +6,6 @@
   <title>오늘의 추천곡</title>
   <link rel="icon" href="낙낙.png" type="image/png" />
   <style>
-    /* (생략 없이 전체 스타일 그대로 포함) */
     body, html {
       margin: 0;
       padding: 0;
@@ -299,7 +298,7 @@
         }
       });
 
-      const searchQuery = encodeURIComponent(`${title} MV`);
+      const searchQuery = encodeURIComponent(`${title} ${currentGenre === 'punk' ? 'PUNK MV' : 'MV'}`);
       const apiKey = 'AIzaSyC3dFjg5VnEvtcnUH-dh_nGFRb9ztDxEeE';
       const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${searchQuery}&key=${apiKey}`;
 
