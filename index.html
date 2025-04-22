@@ -24,6 +24,7 @@
       height: 100vh;
       overflow: hidden;
       filter: blur(25px);
+      z-index: -1;
     }
 
     #background-video {
@@ -53,10 +54,10 @@
     #songTitle {
       font-size: 1.1em;
       margin-bottom: 1.5em;
-      transition: opacity 0.4s ease, transform 0.4s ease;
     }
 
-    .fade-up {
+    #songTitle span {
+      display: inline-block;
       opacity: 0;
       transform: translateY(20px);
       animation: fadeInUp 0.4s ease forwards;
@@ -155,14 +156,13 @@
   </style>
 </head>
 <body>
-
   <div id="background-wrapper">
     <div id="background-video"></div>
   </div>
 
   <div class="content">
     <h1>Today's recommended song</h1>
-    <div id="songTitle">장르를 선택해 주세요</div>
+    <div id="songTitle">오늘의 추천곡 : <span>장르를 선택해 주세요</span></div>
 
     <div class="button-group">
       <button class="btn" onclick="playGenre('indie')">🎧 인디</button>
@@ -211,19 +211,12 @@
 
     function showMessage(content) {
       const box = document.getElementById("messageBox");
-
-      // 애니메이션 초기화
       box.style.display = "block";
       box.classList.remove("fade-in", "fade-out");
       void box.offsetWidth;
 
-      if (typeof content === "string") {
-        box.innerHTML = content;
-      } else {
-        box.innerHTML = '';
-        box.appendChild(content);
-      }
-
+      box.innerHTML = typeof content === "string" ? content : '';
+      if (typeof content !== "string") box.appendChild(content);
       box.classList.add("fade-in");
 
       clearTimeout(box.fadeOutTimer);
@@ -286,10 +279,7 @@
       if (recentSongs.length > 15) recentSongs.pop();
 
       const titleBox = document.getElementById('songTitle');
-      titleBox.classList.remove("fade-up");
-      void titleBox.offsetWidth;
       titleBox.innerHTML = `오늘의 추천곡 : <span>${title}</span>`;
-      titleBox.classList.add("fade-up");
 
       loadVideoPlayers(videoId);
     }
@@ -315,7 +305,7 @@
             e.target.playVideo();
           },
           onStateChange: (e) => {
-            if (e.data === YT.PlayerState.ENDED) playNextSong();
+            if (e.data === YT.PlayerState.ENDED) playGenre(currentGenre);
           }
         }
       });
@@ -337,10 +327,6 @@
           onReady: (e) => e.target.playVideo()
         }
       });
-    }
-
-    function playNextSong() {
-      playGenre(currentGenre);
     }
 
     function likeSong() {
